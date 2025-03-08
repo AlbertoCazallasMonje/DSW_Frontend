@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Home from './components/home/home';
 import './App.css';
 import Login from "./components/login/login";
+import Register from "./components/register/register";
 
 const App = () => {
   return (
@@ -12,6 +13,7 @@ const App = () => {
           {/* Route for the home page + Login + Register */}
           <Route exact path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
             {/* Redirect to '/' if page does not exist */}
             <Route path="*" element={<Navigate to="/" />} />
