@@ -1,0 +1,85 @@
+/* Estilos generales */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.landing-page {
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+  color: #333;
+  min-height: 100vh;
+}
+
+/* Header y Banner */
+.header {
+  background: linear-gradient(135deg, #1e90ff, #00bfff);
+  color: white;
+  padding: 20px;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.navbar-logo h2 {
+  margin: 0;
+}
+
+.navbar-buttons .btn {
+  margin-left: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.navbar-buttons .register {
+  background-color: #fff;
+  color: #1e90ff;
+}
+
+.navbar-buttons .login {
+  background-color: #f0f0f0;
+  color: #1e90ff;
+}
+
+.banner {
+  text-align: center;
+  margin: 20px;
+}
+
+.banner h1 {
+  font-size: 2.5em;
+  margin: 0;
+}
+
+.banner p {
+  font-size: 1.2em;
+  margin-top: 10px;
+}
+
+/* Main y Footer */
+.main {
+  flex: 1;
+  padding: 40px;
+}
+
+.features {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.footer {
+  background-color: #1e90ff;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  margin-top: auto;
+}
