@@ -1,0 +1,112 @@
+/* Estilos generales */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.login-page {
+    display: flex;
+    flex-direction: column;
+    font-family: Arial, sans-serif;
+    color: #333;
+    min-height: 100vh;
+}
+
+/* Header y Navbar */
+.header {
+    background: linear-gradient(135deg, #1e90ff, #00bfff);
+    color: white;
+    padding: 20px;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.navbar-logo h2 {
+    margin: 0;
+}
+
+.navbar-buttons .btn {
+    margin-left: 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Botón para volver atrás */
+.navbar-buttons .back {
+    background-color: #fff;
+    color: #1e90ff;
+}
+
+/* Main y Contenido del Login */
+.main {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center;     /* Centra verticalmente */
+}
+
+.login-container {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    width: 300px; /* Ajusta el ancho según tu preferencia */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.login-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Botón de iniciar sesión */
+.btn.login-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #1e90ff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn.login-btn:hover {
+    background-color: #00bfff;
+}
+
+/* Footer */
+.footer {
+    background-color: #1e90ff;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    margin-top: auto;
+}

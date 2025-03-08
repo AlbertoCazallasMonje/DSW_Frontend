@@ -18,7 +18,7 @@ const Home = () => {
             <header className="header">
                 <nav className="navbar">
                     <div className="navbar-logo">
-                        <h2>Peer2Peer App</h2>
+                        <h2>Orion</h2>
                     </div>
                     <div className="navbar-buttons">
                         <button className="btn register" onClick={handleRegister}>
@@ -32,7 +32,7 @@ const Home = () => {
             </header>
             <main>
                 <div className="banner">
-                    <h1>Welcome to Peer2Peer App</h1>
+                    <h1>Welcome to Orion</h1>
                     <p>The safest and easier way to transfer money between users</p>
                 </div>
                 <section className="features">
@@ -44,12 +44,10 @@ const Home = () => {
                 </section>
             </main>
             <footer className="footer">
-                <p>&copy; 2025 Peer2Peer App</p>
+                <p>&copy; 2025 Orion</p>
                 <p>Alberto Cazallas Monje</p>
             </footer>
         </div>
     );
 }
-
-
 export default Home;
