@@ -1,13 +1,39 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect} from "react";
 import './login.css';
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 
 const Login = () => {
     const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        alert("Signing in...")
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({email, password}),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Login successful:', data);
+            } else {
+                console.error('Login failed:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
     };
 
     const handleBack = () => {
@@ -39,6 +65,8 @@ const Login = () => {
                                 type="email"
                                 id="email"
                                 placeholder="Type your email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 required
                             />
                         </div>
@@ -49,6 +77,8 @@ const Login = () => {
                                 type="password"
                                 id="password"
                                 placeholder="Type your password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 required
                             />
                         </div>
