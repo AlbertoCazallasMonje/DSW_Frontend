@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import './updateUser.css';
 import { countries } from '../utils/countries';
-import { useNavigate } from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 
 const UpdateProfile = () => {
     const navigate = useNavigate();
-
+    const { state } = useLocation();
+    const token = state?.token;
     const [dni, setDni] = useState("");
     const [name, setName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -18,7 +19,6 @@ const UpdateProfile = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const token = localStorage.getItem("token");
                 const response = await fetch("/findUser", {
                     method: "GET",
                     headers: {
@@ -29,13 +29,13 @@ const UpdateProfile = () => {
 
                 if (response.ok) {
                     const data = await response.json();
-                    setDni(data.dni);
-                    setName(data.name);
-                    setLastName(data.lastName);
-                    setAge(data.age);
-                    setAddress(data.address);
-                    setCountry(data.country);
-                    setEmail(data.email);
+                    setDni(data.u_dni);
+                    setName(data.u_name);
+                    setLastName(data.u_lastName);
+                    setAge(data.u_age);
+                    setAddress(data.u_address);
+                    setCountry(data.u_country);
+                    setEmail(data.u_email);
                 } else {
                     alert("Error while retrieving user data.");
                 }
@@ -201,7 +201,7 @@ const UpdateProfile = () => {
                             </select>
                         </div>
                         <div className="form-group">
-                            <label htmlFor="email">CEmail</label>
+                            <label htmlFor="email">Email</label>
                             <input
                                 type="email"
                                 id="email"
