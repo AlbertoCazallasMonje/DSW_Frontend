@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import './updateUser.css';
 import { countries } from '../utils/countries';
-import {useLocation, useNavigate} from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const UpdateProfile = () => {
     const navigate = useNavigate();
     const { state } = useLocation();
     const token = state?.token;
+    const actionToken = state?.actionToken;
     const [dni, setDni] = useState("");
     const [name, setName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -14,17 +15,21 @@ const UpdateProfile = () => {
     const [address, setAddress] = useState("");
     const [country, setCountry] = useState("");
     const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
+                const requestData = {
+                    dni: "12345678A",
+                    sessionToken: token,
+                    actionToken: "653dec60ed22edacf2b4df03a977808d70abf939"
+                };
                 const response = await fetch("/findUser", {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
+                    },
+                    body: JSON.stringify(requestData)
                 });
 
                 if (response.ok) {
@@ -46,16 +51,11 @@ const UpdateProfile = () => {
         };
 
         fetchUserData();
-    }, []);
+    }, [token]);
 
     const isValidEmail = (email) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
-    };
-
-    const isValidPassword = (password) => {
-        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-        return regex.test(password);
     };
 
     const handleSubmit = async (event) => {
@@ -66,11 +66,6 @@ const UpdateProfile = () => {
             return;
         }
 
-        if (password && !isValidPassword(password)) {
-            alert("The password must be 8 characters long, include one uppercase and one special character.");
-            return;
-        }
-
         const payload = {
             dni,
             name,
@@ -78,8 +73,7 @@ const UpdateProfile = () => {
             age: parseInt(age, 10),
             email,
             address,
-            country,
-            ...(password && { password })
+            country
         };
 
         try {
@@ -103,6 +97,41 @@ const UpdateProfile = () => {
         } catch (error) {
             console.error("Error while updating user data", error);
             alert("Error while updating user data.");
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        const confirmation = prompt("To delete your account, type 'DELETE ACCOUNT'");
+        if (confirmation === "DELETE ACCOUNT") {
+            try {
+                const token = localStorage.getItem("token");
+                // Petición para eliminar la cuenta
+                const response = await fetch("/deleteAccount", {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert("Cuenta eliminada exitosamente.");
+                    // Redirige o realiza otra acción tras eliminar la cuenta
+                    navigate("/");
+                } else {
+                    const errorData = await response.json();
+                    alert("Error al eliminar la cuenta: " + errorData.message);
+                }
+
+                // Aquí puedes configurar otra llamada al backend si es necesario
+                // await fetch("/otraLlamada", { ... });
+
+            } catch (error) {
+                console.error("Error al eliminar la cuenta", error);
+                alert("Error al eliminar la cuenta.");
+            }
+        } else {
+            alert("La frase introducida es incorrecta.");
         }
     };
 
@@ -211,19 +240,12 @@ const UpdateProfile = () => {
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
-                        <div className="form-group">
-                            <label htmlFor="password">Password (Don't fill to keep the old credentials)</label>
-                            <input
-                                type="password"
-                                id="password"
-                                placeholder="Type a new password if you want to change it"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
                         <div className="button-group">
                             <button type="submit" className="btn update-btn">
                                 Accept
+                            </button>
+                            <button type="button" className="btn delete-btn" onClick={handleDeleteAccount}>
+                                Delete Account
                             </button>
                             <button type="button" className="btn cancel-btn" onClick={handleCancel}>
                                 Cancel
