@@ -28,7 +28,7 @@ const Login = () => {
             if (response.ok) {
                 const data = await response.json();
                 console.log('Login successful:', data);
-                navigate('/update', { state: { token: data.token } });
+                navigate('/dashboard', { state: { token: data.token } });
             } else {
                 console.error('Login failed:', response.statusText);
             }
