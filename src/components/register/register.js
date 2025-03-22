@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react";
 import './register.css';
-import {countries} from './utils/countries';
+import {countries} from '../utils/countries';
 import {useNavigate} from 'react-router-dom';
 
 const Register = () => {
