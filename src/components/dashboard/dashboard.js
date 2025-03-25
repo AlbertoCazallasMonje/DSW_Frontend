@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import './dashboard.css';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
     const navigate = useNavigate();
+    const { state } = useLocation();
+    const token = state?.token;
 
     const handleLogout = () => {
         navigate("/login");

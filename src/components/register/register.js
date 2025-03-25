@@ -1,7 +1,8 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import './register.css';
-import {countries} from '../utils/countries';
-import {useNavigate} from 'react-router-dom';
+import { countries } from '../utils/countries';
+import { useNavigate } from 'react-router-dom';
+import Particles from "./Particles";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -74,6 +75,19 @@ const Register = () => {
 
     return (
         <div className="registro-page">
+            <Particles
+                className="particles-bg"
+                disableRotation={true}
+                particleCount={300}
+                particleSpread={10}
+                speed={0.1}
+                moveParticlesOnHover={true}
+                particleHoverFactor={1}
+                alphaParticles={true}
+                particleBaseSize={100}
+                sizeRandomness={1}
+                cameraDistance={20}
+            />
             <header className="header">
                 <nav className="navbar">
                     <div className="navbar-logo">

@@ -1,6 +1,7 @@
-import React, {useState, useEffect} from "react";
+import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import './login.css';
-import {useNavigate} from 'react-router-dom';
+import Particles from "./Particles";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -9,20 +10,18 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             alert('Please enter a valid email address.');
             return;
         }
-
         try {
             const response = await fetch('/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({email, password}),
+                body: JSON.stringify({ email, password }),
             });
 
             if (response.ok) {
@@ -38,11 +37,25 @@ const Login = () => {
     };
 
     const handleBack = () => {
-        navigate(-1);
+        navigate('/home');
     };
 
     return (
+
         <div className="login-page">
+            <Particles
+                className="particles-bg"
+                disableRotation={true}
+                particleCount={300}
+                particleSpread={10}
+                speed={0.1}
+                moveParticlesOnHover={true}
+                particleHoverFactor={1}
+                alphaParticles={true}
+                particleBaseSize={100}
+                sizeRandomness={1}
+                cameraDistance={20}
+            />
             <header className="header">
                 <nav className="navbar">
                     <div className="navbar-logo">
@@ -90,6 +103,7 @@ const Login = () => {
                     </form>
                 </div>
             </main>
+
             <footer className="footer">
                 <p>&copy; 2025 Orion</p>
                 <p>Alberto Cazallas Monje</p>
@@ -97,4 +111,5 @@ const Login = () => {
         </div>
     );
 }
+
 export default Login;
