@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 const UpdateProfile = () => {
     const navigate = useNavigate();
     const { state } = useLocation();
-    const token = state?.token;
+    const sessionToken = state?.sessionToken;
     const actionToken = state?.actionToken;
     const [dni, setDni] = useState("");
     const [name, setName] = useState("");
@@ -19,77 +19,87 @@ const UpdateProfile = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const requestData = {
-                    dni: "12345678A",
-                    sessionToken: token,
-                    actionToken: "653dec60ed22edacf2b4df03a977808d70abf939"
-                };
-                const response = await fetch("/findUser", {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(requestData)
+                const userResponse = await fetch('http://localhost:3000/findUser', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionToken: sessionToken,
+                        actionToken: actionToken
+                    })
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setDni(data.u_dni);
-                    setName(data.u_name);
-                    setLastName(data.u_lastName);
-                    setAge(data.u_age);
-                    setAddress(data.u_address);
-                    setCountry(data.u_country);
-                    setEmail(data.u_email);
-                } else {
-                    alert("Error while retrieving user data.");
+                if (!userResponse.ok) {
+                    throw new Error('Error en la llamada a /findUser');
                 }
+                const userData = await userResponse.json();
+                setDni(userData.u_dni);
+                setName(userData.u_name);
+                setLastName(userData.u_lastName);
+                setAge(userData.u_age);
+                setEmail(userData.u_email);
+                setAddress(userData.u_address);
+                setCountry(userData.u_country);
             } catch (error) {
                 console.error("Error while retrieving user data:", error);
                 alert("Error while retrieving user data");
             }
         };
-
+    
         fetchUserData();
-    }, [token]);
+    }, [sessionToken, actionToken]);
 
     const isValidEmail = (email) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
     };
-
     const handleSubmit = async (event) => {
         event.preventDefault();
-
+    
         if (!isValidEmail(email)) {
             alert("Please, introduce a valid email format.");
             return;
         }
-
-        const payload = {
-            dni,
-            name,
-            lastName,
-            age: parseInt(age, 10),
-            email,
-            address,
-            country
-        };
-
+    
         try {
-            const token = localStorage.getItem("token");
-            const response = await fetch("/update", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
+
+            const token = sessionToken;
+    
+            const actionResponse = await fetch('http://localhost:3000/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionToken: token,
+                    actionCode: "UPDATE-USER"
+                })
+            });
+    
+            if (!actionResponse.ok) {
+                throw new Error('Error requesting update user token');
+            }
+    
+            const actionData = await actionResponse.json();
+            const actionToken = actionData.actionToken;
+
+            const payload = {
+                token: token,
+                actionToken: actionToken,
+                dni: dni,
+                name: name,
+                lastName: lastName,
+                age: parseInt(age, 10),
+                email: email,
+                address: address,
+                country: country
+            };
+    
+            const response = await fetch('http://localhost:3000/update', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
+    
             if (response.ok) {
                 alert("Data updated successfully.");
-                navigate("/profile");
+                navigate("/dashboard", { state: { token: sessionToken } });
             } else {
                 const errorData = await response.json();
                 alert("Error while updating user data: " + errorData.message);
@@ -105,7 +115,7 @@ const UpdateProfile = () => {
         if (confirmation === "DELETE ACCOUNT") {
             try {
                 const token = localStorage.getItem("token");
-                // Petición para eliminar la cuenta
+
                 const response = await fetch("/deleteAccount", {
                     method: "DELETE",
                     headers: {
@@ -115,32 +125,32 @@ const UpdateProfile = () => {
                 });
 
                 if (response.ok) {
-                    alert("Cuenta eliminada exitosamente.");
-                    // Redirige o realiza otra acción tras eliminar la cuenta
+                    alert("Account deleted successfully.");
                     navigate("/");
                 } else {
                     const errorData = await response.json();
-                    alert("Error al eliminar la cuenta: " + errorData.message);
+                    alert("Error while deleting the account: " + errorData.message);
                 }
 
-                // Aquí puedes configurar otra llamada al backend si es necesario
-                // await fetch("/otraLlamada", { ... });
-
             } catch (error) {
-                console.error("Error al eliminar la cuenta", error);
-                alert("Error al eliminar la cuenta.");
+                console.error("Error while deleting the account", error);
+                alert("Error while deleting the account.");
             }
         } else {
-            alert("La frase introducida es incorrecta.");
+            alert("The introduced phrase is incorrect.");
         }
     };
 
     const handleCancel = () => {
-        navigate(-1);
+        navigate('/dashboard', { state: { token: sessionToken } });
     };
 
     return (
         <div className="update-page">
+            <div className="gradient-background">
+                <div className="gradient-left"></div>
+                <div className="gradient-right"></div>
+            </div>
             <header className="header">
                 <nav className="navbar">
                     <div className="navbar-logo">

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import './home.css';
 import { useNavigate } from 'react-router-dom';
+import Aurora from './Aurora';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -15,6 +16,12 @@ const Home = () => {
 
     return (
         <div className="landing-page">
+            {/* Aurora background */}
+            <Aurora
+                colorStops={["#000000", "#800080", "#000000"]}
+                blend={0.5}
+                amplitude={0.3}
+            />
             <header className="header">
                 <nav className="navbar">
                     <div className="navbar-logo">
@@ -38,8 +45,7 @@ const Home = () => {
                 <section className="features">
                     <h2>Characteristics</h2>
                     <p>
-                        Find all the functionalities of our platform to perform safe and fast
-                        transactions
+                        Find all the functionalities of our platform to perform safe and fast transactions
                     </p>
                 </section>
             </main>
