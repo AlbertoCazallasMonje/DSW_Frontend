@@ -70,7 +70,7 @@ const Register = () => {
         return regex.test(password);
     };
     const handleBack = () => {
-        navigate(-1);
+        navigate('/home');
     };
 
     return (
