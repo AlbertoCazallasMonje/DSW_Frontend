@@ -114,24 +114,38 @@ const UpdateProfile = () => {
         const confirmation = prompt("To delete your account, type 'DELETE ACCOUNT'");
         if (confirmation === "DELETE ACCOUNT") {
             try {
-                const token = localStorage.getItem("token");
 
-                const response = await fetch("/deleteAccount", {
-                    method: "DELETE",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
+                const actionResponse = await fetch('http://localhost:3000/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionToken: sessionToken,
+                        actionCode: "DELETE-USER"
+                    })
                 });
-
-                if (response.ok) {
+                if (!actionResponse.ok) {
+                    throw new Error('Error requesting delete user token');
+                }
+                const actionData = await actionResponse.json();
+                const actionToken = actionData.actionToken;
+    
+                const deleteResponse = await fetch('http://localhost:3000/delete', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dni: dni,
+                        sessionToken: sessionToken,
+                        actionToken: actionToken
+                    })
+                });
+    
+                if (deleteResponse.ok) {
                     alert("Account deleted successfully.");
                     navigate("/");
                 } else {
-                    const errorData = await response.json();
+                    const errorData = await deleteResponse.json();
                     alert("Error while deleting the account: " + errorData.message);
                 }
-
             } catch (error) {
                 console.error("Error while deleting the account", error);
                 alert("Error while deleting the account.");
