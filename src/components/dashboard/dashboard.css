@@ -106,3 +106,9 @@ html, body {
     padding: 40px 20px;
     text-align: center;
 }
+
+.count-up-text {
+    font-size: 72px;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+  }

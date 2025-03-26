@@ -26,7 +26,7 @@ const Register = () => {
             alert("The password must be 8 characters long, include one uppercase and one special character.");
             return;
         }
-
+    
         const payload = {
             dni,
             name: name,
@@ -37,7 +37,7 @@ const Register = () => {
             address,
             country
         };
-
+    
         try {
             const response = await fetch("/register", {
                 method: "POST",
@@ -46,10 +46,31 @@ const Register = () => {
                 },
                 body: JSON.stringify(payload)
             });
-
+    
             if (response.ok) {
                 alert("User registered successfully.");
-                navigate('/login')
+    
+                const bankAccountPayload = {
+                    dni: dni,
+                    country: country
+                };
+                
+                const bankResponse = await fetch("http://localhost:3002/create", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(bankAccountPayload)
+                });
+    
+                if (!bankResponse.ok) {
+                    const errorData = await bankResponse.json();
+                    alert("Error while creating bank account: " + errorData.message);
+                    return;
+                }
+    
+                alert("Bank account created successfully.");
+                navigate('/login');
             } else {
                 const errorData = await response.json();
                 alert("Error while registering a new user: " + errorData.message);

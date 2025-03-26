@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import './dashboard.css';
 import { useLocation, useNavigate } from 'react-router-dom';
+import CountUp from './CountUp'
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -57,14 +58,19 @@ const Dashboard = () => {
             </header>
             <main>
                 <div className="banner">
-                    <h1>Welcome to the Dashboard</h1>
-                    <p>Here, you will be able to handle your transactions and money</p>
+                    <h1>Welcome to your Dashboard</h1>
+                    <h2>Alberto</h2>
                 </div>
                 <section className="features">
-                    <h2>Dashboard Section</h2>
-                    <p>
-                        On progress...
-                    </p>
+                    <h2>Balance:</h2>
+                    <CountUp
+                        from={0}
+                        to={123.45}
+                        duration={2}
+                        separator=","
+                        className="count-up-text"
+                    />    <span> €</span>
+
                 </section>
             </main>
         </div>
