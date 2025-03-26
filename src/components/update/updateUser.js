@@ -51,39 +51,55 @@ const UpdateProfile = () => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
     };
-
     const handleSubmit = async (event) => {
         event.preventDefault();
-
+    
         if (!isValidEmail(email)) {
             alert("Please, introduce a valid email format.");
             return;
         }
-
-        const payload = {
-            dni,
-            name,
-            lastName,
-            age: parseInt(age, 10),
-            email,
-            address,
-            country
-        };
-
+    
         try {
-            const token = localStorage.getItem("token");
-            const response = await fetch("/update", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
+
+            const token = sessionToken;
+    
+            const actionResponse = await fetch('http://localhost:3000/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionToken: token,
+                    actionCode: "UPDATE-USER"
+                })
+            });
+    
+            if (!actionResponse.ok) {
+                throw new Error('Error requesting update user token');
+            }
+    
+            const actionData = await actionResponse.json();
+            const actionToken = actionData.actionToken;
+
+            const payload = {
+                token: token,
+                actionToken: actionToken,
+                dni: dni,
+                name: name,
+                lastName: lastName,
+                age: parseInt(age, 10),
+                email: email,
+                address: address,
+                country: country
+            };
+    
+            const response = await fetch('http://localhost:3000/update', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
+    
             if (response.ok) {
                 alert("Data updated successfully.");
-                navigate("/profile");
+                navigate("/dashboard", { state: { token: sessionToken } });
             } else {
                 const errorData = await response.json();
                 alert("Error while updating user data: " + errorData.message);
@@ -126,7 +142,7 @@ const UpdateProfile = () => {
     };
 
     const handleCancel = () => {
-        navigate(-1);
+        navigate('/dashboard', { state: { token: sessionToken } });
     };
 
     return (
