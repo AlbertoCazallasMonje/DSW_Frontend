@@ -13,8 +13,14 @@ const Dashboard = () => {
     const [userData, setUserData] = useState(null);
     const [userName, setUserName] = useState("");
     const [balance, setBalance] = useState(0);
-    const [showTopUpField, setShowTopUpField] = useState(false);
+    
+    const [activeSpotlight, setActiveSpotlight] = useState(null);
+
     const [topUpAmount, setTopUpAmount] = useState("");
+
+    const [creditCardNumber, setCreditCardNumber] = useState("");
+    const [creditCardExpirationDate, setCreditCardExpirationDate] = useState("");
+    const [creditCardCVV, setCreditCardCVV] = useState("");
 
     useEffect(() => {
         const fetchAccountData = async () => {
@@ -44,7 +50,6 @@ const Dashboard = () => {
                 console.log("Datos de la cuenta:", accountData);
     
                 setUserData(accountData);
-
                 setBalance(accountData.b_balance || 0);
             } catch (error) {
                 console.error("Error fetching account data:", error);
@@ -93,7 +98,7 @@ const Dashboard = () => {
         }
       }, [sessionToken]);
 
-      const handleLogout = async () => {
+    const handleLogout = async () => {
         try {
             const response = await fetch('http://localhost:3000/logout', {
                 method: 'POST',
@@ -131,10 +136,13 @@ const Dashboard = () => {
         }
     };
 
-    const toggleTopUpField = () => {
-        setShowTopUpField(prev => !prev);
-        setTopUpAmount("");
-    };
+    const toggleSpotlight = (type) => {
+        if (activeSpotlight === type) {
+          setActiveSpotlight(null);
+        } else {
+          setActiveSpotlight(type);
+        }
+      };
 
     const handleTopUpSubmit = async (e) => {
         e.preventDefault();
@@ -169,7 +177,7 @@ const Dashboard = () => {
                 alert("Error while adding top-up: " + errorData.message);
             } else {
                 alert("Top-up added successfully.");
-                setShowTopUpField(false);
+                setActiveSpotlight(null);
                 setBalance(prev => prev + parseFloat(topUpAmount));
                 setTopUpAmount("");
             }
@@ -179,7 +187,8 @@ const Dashboard = () => {
         }
     };
 
-    const handleCreateCard = async () => {
+    const handleCreditCardSubmit = async (e) => {
+        e.preventDefault();
         try {
             const actionResponse = await fetch('http://localhost:3000/action', {
                 method: 'POST',
@@ -198,7 +207,12 @@ const Dashboard = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     sessionToken: sessionToken,
-                    actionToken: actionToken
+                    actionToken: actionToken,
+                    card: {
+                        cc_number: creditCardNumber,
+                        cc_expirationDate: creditCardExpirationDate,
+                        cc_cvv: creditCardCVV
+                    }
                 })
             });
             if (!createCardResponse.ok) {
@@ -206,6 +220,10 @@ const Dashboard = () => {
                 alert("Error while creating card: " + errorData.message);
             } else {
                 alert("Credit card created successfully.");
+                setActiveSpotlight(null);
+                setCreditCardNumber("");
+                setCreditCardExpirationDate("");
+                setCreditCardCVV("");
             }
         } catch (error) {
             console.error("Error while creating card:", error);
@@ -233,7 +251,7 @@ const Dashboard = () => {
             <main>
                 <div className="banner">
                     <h1>Welcome to your Dashboard</h1>
-                    <h2>{userName|| "User"}</h2>
+                    <h2>{userName || "User"}</h2>
                 </div>
                 <section className="features">
                     <h2>Balance:</h2>
@@ -247,17 +265,17 @@ const Dashboard = () => {
                     <span> €</span>
                 </section>
                 <div className="button-container">
-                    <button className="glassy-button" onClick={toggleTopUpField}>
+                    <button className="glassy-button" onClick={() => toggleSpotlight("topUp")}>
                         <GoPlus size={24} />
                     </button>
                     <button className="glassy-button">
                         <GoArrowSwitch size={24} />
                     </button>
-                    <button className="glassy-button" onClick={handleCreateCard}>
+                    <button className="glassy-button" onClick={() => toggleSpotlight("creditCard")}>
                         <GoCreditCard size={24} />
                     </button>
                 </div>
-                {showTopUpField && (
+                {activeSpotlight === "topUp" && (
                     <div className="top-up-wrapper">
                         <SpotlightCard className="custom-spotlight-card" spotlightColor="rgba(125, 36, 199, 0.81)">
                             <form onSubmit={handleTopUpSubmit} className="top-up-form">
@@ -274,10 +292,55 @@ const Dashboard = () => {
                                 />
                                 <span>€</span>
                                 <div className="button-row">
-                                    <button type="submit" className="btn glassy-button">
-                                        Submit
+                                    <button type="submit" className="btn glassy-button">Submit</button>
+                                    <button type="button" className="btn glassy-button" onClick={() => setActiveSpotlight(null)}>
+                                        Cancel
                                     </button>
-                                    <button type="button" className="btn glassy-button" onClick={toggleTopUpField}>
+                                </div>
+                            </form>
+                        </SpotlightCard>
+                    </div>
+                )}
+                {activeSpotlight === "creditCard" && (
+                    <div className="top-up-wrapper">
+                        <SpotlightCard className="custom-spotlight-card" spotlightColor="rgba(125, 36, 199, 0.81)">
+                            <form onSubmit={handleCreditCardSubmit} className="top-up-form">
+                                <h2>Create Credit Card</h2>
+                                <div className="form-group">
+                                    <label htmlFor="cc_number">Card Number:</label>
+                                    <input
+                                        id="cc_number"
+                                        type="text"
+                                        value={creditCardNumber}
+                                        onChange={(e) => setCreditCardNumber(e.target.value)}
+                                        placeholder="16-digit card number"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="cc_expirationDate">Expiration Date:</label>
+                                    <input
+                                        id="cc_expirationDate"
+                                        type="date"
+                                        value={creditCardExpirationDate}
+                                        onChange={(e) => setCreditCardExpirationDate(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="cc_cvv">CVV:</label>
+                                    <input
+                                        id="cc_cvv"
+                                        type="text"
+                                        value={creditCardCVV}
+                                        onChange={(e) => setCreditCardCVV(e.target.value)}
+                                        placeholder="3-digit CVV"
+                                        required
+                                    />
+                                </div>
+                                <div className="button-row">
+                                    <button type="submit" className="btn glassy-button">Submit</button>
+                                    <button type="button" className="btn glassy-button" onClick={() => setActiveSpotlight(null)}>
                                         Cancel
                                     </button>
                                 </div>
