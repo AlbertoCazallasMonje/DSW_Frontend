@@ -7,6 +7,7 @@ import Register from "./components/register/register";
 import UpdateUser from "./components/update/updateUser";
 import Dashboard from "./components/dashboard/dashboard";
 import Recovery from "./components/recovery/recovery";
+import Reset from "./components/reset/reset";
 
 const App = () => {
     return (
@@ -20,6 +21,7 @@ const App = () => {
                     <Route path="/update" element={<UpdateUser/>}/>
                     <Route path="/dashboard" element={<Dashboard/>}/>
                     <Route path="/recovery" element={<Recovery/>}/>
+                    <Route path="/reset/:actionToken" element={<Reset/>}/>
 
                     {/* Redirect to '/' if page does not exist */}
                     <Route path="*" element={<Navigate to="/"/>}/>
