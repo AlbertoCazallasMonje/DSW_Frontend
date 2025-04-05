@@ -40,8 +40,12 @@ const Login = () => {
         navigate('/home');
     };
 
-    return (
+    const handleRecovery = (e) => {
+        e.preventDefault();
+        navigate('/recovery');
+    };
 
+    return (
         <div className="login-page">
             <Particles
                 className="particles-bg"
@@ -97,6 +101,12 @@ const Login = () => {
                             />
                         </div>
 
+                        <div className="recovery-link-container">
+                            <a href="#" className="recovery-link" onClick={handleRecovery}>
+                                Forgot your password?
+                            </a>
+                        </div>
+
                         <button type="submit" className="btn login-btn">
                             Sign-in
                         </button>
@@ -110,6 +120,6 @@ const Login = () => {
             </footer>
         </div>
     );
-}
+};
 
 export default Login;

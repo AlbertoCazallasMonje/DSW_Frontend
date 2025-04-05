@@ -6,6 +6,7 @@ import Login from "./components/login/login";
 import Register from "./components/register/register";
 import UpdateUser from "./components/update/updateUser";
 import Dashboard from "./components/dashboard/dashboard";
+import Recovery from "./components/recovery/recovery";
 
 const App = () => {
     return (
@@ -18,6 +19,7 @@ const App = () => {
                     <Route path="/register" element={<Register/>}/>
                     <Route path="/update" element={<UpdateUser/>}/>
                     <Route path="/dashboard" element={<Dashboard/>}/>
+                    <Route path="/recovery" element={<Recovery/>}/>
 
                     {/* Redirect to '/' if page does not exist */}
                     <Route path="*" element={<Navigate to="/"/>}/>
