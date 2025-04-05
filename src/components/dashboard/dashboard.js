@@ -14,92 +14,62 @@ const Dashboard = () => {
   const [userData, setUserData] = useState(null);
   const [userName, setUserName] = useState("");
   const [balance, setBalance] = useState(0);
-
   const [activeSpotlight, setActiveSpotlight] = useState(null);
-
   const [topUpAmount, setTopUpAmount] = useState("");
-
   const [userCards, setUserCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
-
   const [creditCardNumber, setCreditCardNumber] = useState("");
   const [creditCardExpirationDate, setCreditCardExpirationDate] = useState("");
   const [creditCardCVV, setCreditCardCVV] = useState("");
+  const [transactionEmail, setTransactionEmail] = useState("");
+  const [transactionAmount, setTransactionAmount] = useState("");
 
   useEffect(() => {
-    const fetchAccountData = async () => {
+    if (!sessionToken) return;
+    const fetchData = async () => {
       try {
         const actionResponse = await fetch('http://localhost:3000/action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionToken: sessionToken,
-            actionCode: "FIND-USER"
-          })
+          body: JSON.stringify({ sessionToken, actionCode: "FIND-USER" })
         });
         if (!actionResponse.ok) throw new Error('Error en la solicitud del token de acción.');
         const actionData = await actionResponse.json();
         const actionToken = actionData.actionToken;
-
         const findResponse = await fetch('http://localhost:3002/find', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionToken: sessionToken,
-            actionToken: actionToken
-          })
+          body: JSON.stringify({ sessionToken, actionToken })
         });
         if (!findResponse.ok) throw new Error('Error en la consulta de la cuenta.');
         const accountData = await findResponse.json();
-        console.log("Datos de la cuenta:", accountData);
-
         setUserData(accountData);
         setBalance(accountData.b_balance || 0);
       } catch (error) {
         console.error("Error fetching account data:", error);
       }
-    };
-
-    if (sessionToken) {
-      fetchAccountData();
-    }
-  }, [sessionToken]);
-
-  useEffect(() => {
-    const loadUserData = async () => {
       try {
-        const actionResponse = await fetch('http://localhost:3000/action', {
+        const userActionResponse = await fetch('http://localhost:3000/action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionToken: sessionToken,
-            actionCode: "FIND-USER"
-          })
+          body: JSON.stringify({ sessionToken, actionCode: "FIND-USER" })
         });
-        if (!actionResponse.ok) throw new Error('Error fetching user action token.');
-        const actionData = await actionResponse.json();
-        const actionToken = actionData.actionToken;
-
+        if (!userActionResponse.ok) throw new Error('Error fetching user action token.');
+        const userActionData = await userActionResponse.json();
+        const userActionToken = userActionData.actionToken;
         const userResponse = await fetch('http://localhost:3000/findUser', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionToken: sessionToken,
-            actionToken: actionToken
-          })
+          body: JSON.stringify({ sessionToken, actionToken: userActionToken })
         });
         if (!userResponse.ok) throw new Error('Error fetching user data.');
         const userData = await userResponse.json();
-        console.log("Datos del usuario:", userData);
         setUserName(userData.u_name || "User");
       } catch (error) {
         console.error("Error loading user data:", error);
       }
     };
-
-    if (sessionToken) {
-      loadUserData();
-    }
+    fetchData();
   }, [sessionToken]);
 
   const handleLogout = async () => {
@@ -107,7 +77,7 @@ const Dashboard = () => {
       const response = await fetch('http://localhost:3000/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionToken: sessionToken })
+        body: JSON.stringify({ sessionToken })
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -126,10 +96,7 @@ const Dashboard = () => {
       const actionResponse = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionToken: sessionToken,
-          actionCode: "FIND-USER"
-        })
+        body: JSON.stringify({ sessionToken, actionCode: "FIND-USER" })
       });
       if (!actionResponse.ok) throw new Error('Error en la solicitud del token de acción.');
       const actionData = await actionResponse.json();
@@ -143,16 +110,11 @@ const Dashboard = () => {
   const toggleSpotlight = (type) => {
     if (activeSpotlight === type) {
       setActiveSpotlight(null);
-      if (type === "topUp") {
-        setUserCards([]);
-        setSelectedCard(null);
-      }
+      if (type === "topUp") { setUserCards([]); setSelectedCard(null); }
+      else if (type === "transaction") { setTransactionEmail(""); setTransactionAmount(""); }
     } else {
       setActiveSpotlight(type);
-      if (type === "topUp") {
-        setSelectedCard(null);
-        fetchUserCards();
-      }
+      if (type === "topUp") { setSelectedCard(null); fetchUserCards(); }
     }
   };
 
@@ -161,31 +123,22 @@ const Dashboard = () => {
       const actionResponse = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionToken: sessionToken,
-          actionCode: "SEARCH-CARD"
-        })
+        body: JSON.stringify({ sessionToken, actionCode: "SEARCH-CARD" })
       });
       if (!actionResponse.ok) throw new Error('Error requesting search card action token.');
       const actionData = await actionResponse.json();
       const actionToken = actionData.actionToken;
-
       const searchResponse = await fetch('http://localhost:3002/searchCards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionToken: sessionToken,
-          actionToken: actionToken
-        })
+        body: JSON.stringify({ sessionToken, actionToken })
       });
       if (!searchResponse.ok) {
         const errorData = await searchResponse.json();
         throw new Error(errorData.message || "Error fetching cards.");
       }
       const cards = await searchResponse.json();
-      setUserCards(
-        cards.map(card => `Tarjeta terminada en ${card.cc_number.slice(-4)}`)
-      );
+      setUserCards(cards.map(card => `Tarjeta terminada en ${card.cc_number.slice(-4)}`));
     } catch (error) {
       console.error("Error fetching user cards:", error);
       alert("Error fetching user cards: " + error.message);
@@ -202,24 +155,15 @@ const Dashboard = () => {
       const actionResponse = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionToken: sessionToken,
-          actionCode: "ADD-TOP-UP"
-        })
+        body: JSON.stringify({ sessionToken, actionCode: "ADD-TOP-UP" })
       });
       if (!actionResponse.ok) throw new Error('Error requesting top-up action token.');
       const actionData = await actionResponse.json();
       const actionToken = actionData.actionToken;
-
       const topUpResponse = await fetch('http://localhost:3002/topUp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionToken: sessionToken,
-          actionToken: actionToken,
-          quantity: parseFloat(topUpAmount),
-          card: selectedCard
-        })
+        body: JSON.stringify({ sessionToken, actionToken, quantity: parseFloat(topUpAmount), card: selectedCard })
       });
       if (!topUpResponse.ok) {
         const errorData = await topUpResponse.json();
@@ -244,26 +188,18 @@ const Dashboard = () => {
       const actionResponse = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionToken: sessionToken,
-          actionCode: "CREATE-CARD"
-        })
+        body: JSON.stringify({ sessionToken, actionCode: "CREATE-CARD" })
       });
       if (!actionResponse.ok) throw new Error('Error requesting create card action token.');
       const actionData = await actionResponse.json();
       const actionToken = actionData.actionToken;
-
       const createCardResponse = await fetch('http://localhost:3002/createCard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionToken: sessionToken,
-          actionToken: actionToken,
-          card: {
-            cc_number: creditCardNumber,
-            cc_expirationDate: creditCardExpirationDate,
-            cc_cvv: creditCardCVV
-          }
+          sessionToken,
+          actionToken,
+          card: { cc_number: creditCardNumber, cc_expirationDate: creditCardExpirationDate, cc_cvv: creditCardCVV }
         })
       });
       if (!createCardResponse.ok) {
@@ -279,6 +215,51 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Error while creating card:", error);
       alert("Error while creating card.");
+    }
+  };
+
+  const isValidEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  const handleTransactionSubmit = async (e) => {
+    e.preventDefault();
+    if (!transactionEmail || !isValidEmail(transactionEmail)) {
+      alert("Por favor, introduce un correo electrónico válido.");
+      return;
+    }
+    if (!transactionAmount || isNaN(transactionAmount) || Number(transactionAmount) <= 0) {
+      alert("Por favor, introduce una cantidad válida.");
+      return;
+    }
+    try {
+      const actionResponse = await fetch('http://localhost:3000/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken, actionCode: "PERFORM-TRANSACTION" })
+      });
+      if (!actionResponse.ok) throw new Error('Error requesting transaction action token.');
+      const actionData = await actionResponse.json();
+      const actionToken = actionData.actionToken;
+      const transactionResponse = await fetch('http://localhost:3002/performTransaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken, actionToken, email: transactionEmail, amount: parseFloat(transactionAmount) })
+      });
+      if (!transactionResponse.ok) {
+        const errorData = await transactionResponse.json();
+        alert("Error while performing transaction: " + errorData.error);
+      } else {
+        alert("Transaction performed successfully.");
+        setActiveSpotlight(null);
+        setBalance(prev => prev - parseFloat(transactionAmount));
+        setTransactionEmail("");
+        setTransactionAmount("");
+      }
+    } catch (error) {
+      console.error("Error while processing transaction:", error);
+      alert("Error while processing transaction.");
     }
   };
 
@@ -306,20 +287,14 @@ const Dashboard = () => {
         </div>
         <section className="features">
           <h2>Balance:</h2>
-          <CountUp
-            from={0}
-            to={balance}
-            duration={0.25}
-            separator=","
-            className="count-up-text"
-          />
+          <CountUp from={0} to={balance} duration={0.25} separator="," className="count-up-text" />
           <span> €</span>
         </section>
         <div className="button-container">
           <button className="glassy-button" onClick={() => toggleSpotlight("topUp")}>
             <GoPlus size={24} />
           </button>
-          <button className="glassy-button">
+          <button className="glassy-button" onClick={() => toggleSpotlight("transaction")}>
             <GoArrowSwitch size={24} />
           </button>
           <button className="glassy-button" onClick={() => toggleSpotlight("creditCard")}>
@@ -334,9 +309,7 @@ const Dashboard = () => {
                   <h2>Selecciona una tarjeta</h2>
                   <AnimatedList
                     items={userCards}
-                    onItemSelect={(item, index) => {
-                      setSelectedCard(item);
-                    }}
+                    onItemSelect={(item, index) => { setSelectedCard(item); }}
                     showGradients={true}
                     enableArrowNavigation={true}
                     displayScrollbar={true}
@@ -418,6 +391,47 @@ const Dashboard = () => {
                   <button type="submit" className="btn glassy-button">Submit</button>
                   <button type="button" className="btn glassy-button" onClick={() => setActiveSpotlight(null)}>
                     Cancel
+                  </button>
+                </div>
+              </form>
+            </SpotlightCard>
+          </div>
+        )}
+        {activeSpotlight === "transaction" && (
+          <div className="top-up-wrapper">
+            <SpotlightCard className="custom-spotlight-card" spotlightColor="rgba(125, 36, 199, 0.81)">
+              <h2>Transferencia</h2>
+              <form onSubmit={handleTransactionSubmit} className="top-up-form">
+                <div className="form-group">
+                  <label htmlFor="transactionEmail">Correo electrónico:</label>
+                  <input
+                    id="transactionEmail"
+                    type="email"
+                    value={transactionEmail}
+                    onChange={(e) => setTransactionEmail(e.target.value)}
+                    placeholder="user@example.com"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="transactionAmount">Cantidad:</label>
+                  <input
+                    id="transactionAmount"
+                    type="number"
+                    value={transactionAmount}
+                    onChange={(e) => setTransactionAmount(e.target.value)}
+                    placeholder="Cantidad a transferir"
+                    required
+                  />
+                </div>
+                <div className="button-row">
+                  <button type="submit" className="btn glassy-button">Enviar</button>
+                  <button type="button" className="btn glassy-button" onClick={() => {
+                    setActiveSpotlight(null);
+                    setTransactionEmail("");
+                    setTransactionAmount("");
+                  }}>
+                    Cancelar
                   </button>
                 </div>
               </form>
