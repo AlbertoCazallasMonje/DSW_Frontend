@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import './dashboard.css';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { GoArrowSwitch, GoCreditCard, GoPlus } from "react-icons/go";
+import { GoArrowSwitch, GoCreditCard, GoPlus, GoRead } from "react-icons/go";
 import CountUp from './CountUp';
 import SpotlightCard from './SpotlightCard';
 import AnimatedList from './AnimatedList';
@@ -23,6 +23,10 @@ const Dashboard = () => {
   const [creditCardCVV, setCreditCardCVV] = useState("");
   const [transactionEmail, setTransactionEmail] = useState("");
   const [transactionAmount, setTransactionAmount] = useState("");
+
+  const [requestMoneyEmail, setRequestMoneyEmail] = useState("");
+  const [requestMoneyAmount, setRequestMoneyAmount] = useState("");
+  const [requestMoneyMessage, setRequestMoneyMessage] = useState("");
 
   useEffect(() => {
     if (!sessionToken) return;
@@ -112,6 +116,7 @@ const Dashboard = () => {
       setActiveSpotlight(null);
       if (type === "topUp") { setUserCards([]); setSelectedCard(null); }
       else if (type === "transaction") { setTransactionEmail(""); setTransactionAmount(""); }
+      else if (type === "requestMoney") { setRequestMoneyEmail(""); setRequestMoneyAmount(""); setRequestMoneyMessage(""); }
     } else {
       setActiveSpotlight(type);
       if (type === "topUp") { setSelectedCard(null); fetchUserCards(); }
@@ -263,6 +268,52 @@ const Dashboard = () => {
     }
   };
 
+  const handleRequestMoneySubmit = async (e) => {
+    e.preventDefault();
+    if (!requestMoneyEmail || !isValidEmail(requestMoneyEmail)) {
+      alert("Por favor, introduce un correo electrónico válido.");
+      return;
+    }
+    if (!requestMoneyAmount || isNaN(requestMoneyAmount) || Number(requestMoneyAmount) <= 0) {
+      alert("Por favor, introduce una cantidad válida.");
+      return;
+    }
+    try {
+      const actionResponse = await fetch('http://localhost:3000/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken, actionCode: "PERFORM-TRANSACTION" })
+      });
+      if (!actionResponse.ok) throw new Error('Error requesting transaction action token.');
+      const actionData = await actionResponse.json();
+      const actionToken = actionData.actionToken;
+      const requestMoneyResponse = await fetch('http://localhost:3002/requestMoney', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionToken,
+          actionToken,
+          email: requestMoneyEmail,
+          amount: parseFloat(requestMoneyAmount),
+          message: requestMoneyMessage
+        })
+      });
+      if (!requestMoneyResponse.ok) {
+        const errorData = await requestMoneyResponse.json();
+        alert("Error while requesting money: " + errorData.message);
+      } else {
+        alert("Money request sent successfully.");
+        setActiveSpotlight(null);
+        setRequestMoneyEmail("");
+        setRequestMoneyAmount("");
+        setRequestMoneyMessage("");
+      }
+    } catch (error) {
+      console.error("Error while processing money request:", error);
+      alert("Error while processing money request.");
+    }
+  };
+
   return (
     <div className="dashboard-page">
       <div className="gradient-background">
@@ -299,6 +350,9 @@ const Dashboard = () => {
           </button>
           <button className="glassy-button" onClick={() => toggleSpotlight("creditCard")}>
             <GoCreditCard size={24} />
+          </button>
+          <button className="glassy-button" onClick={() => toggleSpotlight("requestMoney")}>
+            <GoRead size={24} />
           </button>
         </div>
         {activeSpotlight === "topUp" && (
@@ -430,6 +484,58 @@ const Dashboard = () => {
                     setActiveSpotlight(null);
                     setTransactionEmail("");
                     setTransactionAmount("");
+                  }}>
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </SpotlightCard>
+          </div>
+        )}
+        {activeSpotlight === "requestMoney" && (
+          <div className="top-up-wrapper">
+            <SpotlightCard className="custom-spotlight-card" spotlightColor="rgba(125, 36, 199, 0.81)">
+              <h2>Solicitar Dinero</h2>
+              <form onSubmit={handleRequestMoneySubmit} className="top-up-form">
+                <div className="form-group">
+                  <label htmlFor="requestMoneyEmail">Correo electrónico:</label>
+                  <input
+                    id="requestMoneyEmail"
+                    type="email"
+                    value={requestMoneyEmail}
+                    onChange={(e) => setRequestMoneyEmail(e.target.value)}
+                    placeholder="john.doe@example.com"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="requestMoneyAmount">Cantidad:</label>
+                  <input
+                    id="requestMoneyAmount"
+                    type="number"
+                    value={requestMoneyAmount}
+                    onChange={(e) => setRequestMoneyAmount(e.target.value)}
+                    placeholder="50.00"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="requestMoneyMessage">Mensaje:</label>
+                  <textarea
+                    id="requestMoneyMessage"
+                    value={requestMoneyMessage}
+                    onChange={(e) => setRequestMoneyMessage(e.target.value)}
+                    placeholder="Requesting money for lunch"
+                    required
+                  />
+                </div>
+                <div className="button-row">
+                  <button type="submit" className="btn glassy-button">Submit</button>
+                  <button type="button" className="btn glassy-button" onClick={() => {
+                    setActiveSpotlight(null);
+                    setRequestMoneyEmail("");
+                    setRequestMoneyAmount("");
+                    setRequestMoneyMessage("");
                   }}>
                     Cancelar
                   </button>
