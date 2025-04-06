@@ -418,8 +418,6 @@ const Dashboard = () => {
   return (
     <div className="dashboard-page">
       <div className="gradient-background">
-        <div className="gradient-left"></div>
-        <div className="gradient-right"></div>
       </div>
       <header className="header">
         <nav className="navbar">
