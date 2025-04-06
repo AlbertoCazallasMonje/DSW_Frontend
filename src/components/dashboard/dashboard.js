@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import './dashboard.css';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { 
-  GoArrowSwitch, 
-  GoCreditCard, 
-  GoPlus, 
-  GoRead, 
-  GoTriangleDown, 
-  GoTriangleUp 
+import {
+  GoArrowSwitch,
+  GoCreditCard,
+  GoPlus,
+  GoRead,
+  GoTriangleDown,
+  GoTriangleUp
 } from "react-icons/go";
 import CountUp from './CountUp';
 import SpotlightCard from './SpotlightCard';
@@ -381,20 +381,27 @@ const Dashboard = () => {
   };
 
   const handleResolveRequest = async (transactionId, resolution) => {
+    if (resolution !== "ACCEPTED" && resolution !== "DENIED") {
+      console.error("Valor de resolución no válido:", resolution);
+      return;
+    }
+
     try {
       const actRes = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionToken, actionCode: "RESOLVE-REQUEST" })
+        body: JSON.stringify({ sessionToken, actionCode: "PERFORM-TRANSACTION" })
       });
       if (!actRes.ok) throw new Error('Error solicitando token para resolver request.');
       const actData = await actRes.json();
       const actionToken = actData.actionToken;
+
       const resReq = await fetch('http://localhost:3002/resolveRequest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionToken, transactionId, resolution })
       });
+
       if (!resReq.ok) {
         const errData = await resReq.json();
         alert("Error while resolving request: " + errData.error);
@@ -404,7 +411,7 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error("Error processing resolve request:", error);
-      alert("Error processing resolve request.");
+      alert("Error processing resolve request: " + error.message);
     }
   };
 
@@ -450,7 +457,7 @@ const Dashboard = () => {
           </button>
         </div>
 
-        {/* Sección de Pending Requests con encabezado y botón de toggle */}
+
         <section className="pending-requests" ref={pendingRef}>
           <div className="pending-requests-header">
             <h2>Pending Requests</h2>
@@ -468,10 +475,10 @@ const Dashboard = () => {
                       {item.t_message && <> | <strong>Message:</strong> {item.t_message}</>}
                     </div>
                     <div className="button-row">
-                      <button className="btn glassy-button" onClick={() => handleResolveRequest(item.t_id, 'ACCEPTED')}>
+                      <button className="btn glassy-button" onClick={() => handleResolveRequest(item.t_id, "ACCEPTED")}>
                         Accept
                       </button>
-                      <button className="btn glassy-button" onClick={() => handleResolveRequest(item.t_id, 'DENIED')}>
+                      <button className="btn glassy-button" onClick={() => handleResolveRequest(item.t_id, "DENIED")}>
                         Decline
                       </button>
                     </div>
