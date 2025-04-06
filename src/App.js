@@ -8,6 +8,7 @@ import UpdateUser from "./components/update/updateUser";
 import Dashboard from "./components/dashboard/dashboard";
 import Recovery from "./components/recovery/recovery";
 import Reset from "./components/reset/reset";
+import AdminDashboard from "./components/admin-dashboard/adminDashboard";
 
 const App = () => {
     return (
@@ -22,6 +23,7 @@ const App = () => {
                     <Route path="/dashboard" element={<Dashboard/>}/>
                     <Route path="/recovery" element={<Recovery/>}/>
                     <Route path="/reset/:actionToken" element={<Reset/>}/>
+                    <Route path="/admin-dashboard" element={<AdminDashboard/>}/>
 
                     {/* Redirect to '/' if page does not exist */}
                     <Route path="*" element={<Navigate to="/"/>}/>

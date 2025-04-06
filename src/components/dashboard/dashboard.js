@@ -42,15 +42,12 @@ const Dashboard = () => {
   const [loadingPending, setLoadingPending] = useState(false);
   const [showPendingRequests, setShowPendingRequests] = useState(false);
 
-  // Referencia para la sección de Pending Requests
   const pendingRef = useRef(null);
 
-  // Cargar datos de cuenta y usuario al iniciar la página
   useEffect(() => {
     if (!sessionToken) return;
     const fetchData = async () => {
       try {
-        // Obtener token y datos de la cuenta
         const actionRes = await fetch('http://localhost:3000/action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -72,7 +69,6 @@ const Dashboard = () => {
         console.error("Error fetching account data:", error);
       }
       try {
-        // Obtener token y datos del usuario
         const userActRes = await fetch('http://localhost:3000/action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -96,10 +92,6 @@ const Dashboard = () => {
     fetchData();
   }, [sessionToken]);
 
-  // NOTA: Se elimina la carga automática de transacciones pendientes.
-  // Ahora se cargan al pulsar el botón desplegable.
-
-  // Desplazar la vista hacia la sección de Pending Requests al expandirla
   useEffect(() => {
     if (showPendingRequests && pendingRef.current) {
       pendingRef.current.scrollIntoView({ behavior: "smooth" });
@@ -107,7 +99,7 @@ const Dashboard = () => {
   }, [showPendingRequests]);
 
   const loadPendingRequests = async () => {
-    if (loadingPending) return; // Evita llamadas simultáneas
+    if (loadingPending) return;
     setLoadingPending(true);
     try {
       const actionRes = await fetch('http://localhost:3000/action', {
@@ -139,7 +131,6 @@ const Dashboard = () => {
 
   const togglePendingRequests = () => {
     if (!showPendingRequests) {
-      // Se carga la lista al expandirla
       loadPendingRequests();
     }
     setShowPendingRequests(prev => !prev);
@@ -180,7 +171,7 @@ const Dashboard = () => {
     }
   };
 
-  // Abre o cierra modales (topUp, transaction, requestMoney)
+
   const toggleSpotlight = (type) => {
     setActiveSpotlight(prev => (prev === type ? null : type));
     if (type === "topUp") {
@@ -588,10 +579,10 @@ const Dashboard = () => {
         {activeSpotlight === "transaction" && (
           <div className="top-up-wrapper">
             <SpotlightCard className="custom-spotlight-card" spotlightColor="rgba(125, 36, 199, 0.81)">
-              <h2>Transferencia</h2>
+              <h2>Transfer</h2>
               <form onSubmit={handleTransactionSubmit} className="top-up-form">
                 <div className="form-group">
-                  <label htmlFor="transactionEmail">Correo electrónico:</label>
+                  <label htmlFor="transactionEmail">Email:</label>
                   <input
                     id="transactionEmail"
                     type="email"
@@ -602,7 +593,7 @@ const Dashboard = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="transactionAmount">Cantidad:</label>
+                  <label htmlFor="transactionAmount">Amount:</label>
                   <input
                     id="transactionAmount"
                     type="number"
@@ -613,7 +604,7 @@ const Dashboard = () => {
                   />
                 </div>
                 <div className="button-row">
-                  <button type="submit" className="btn glassy-button">Enviar</button>
+                  <button type="submit" className="btn glassy-button">Send</button>
                   <button type="button" className="btn glassy-button" onClick={() => {
                     setActiveSpotlight(null);
                     setTransactionEmail("");
@@ -629,10 +620,10 @@ const Dashboard = () => {
         {activeSpotlight === "requestMoney" && (
           <div className="top-up-wrapper">
             <SpotlightCard className="custom-spotlight-card" spotlightColor="rgba(125, 36, 199, 0.81)">
-              <h2>Solicitar Dinero</h2>
+              <h2>Request Money</h2>
               <form onSubmit={handleRequestMoneySubmit} className="top-up-form">
                 <div className="form-group">
-                  <label htmlFor="requestMoneyEmail">Correo electrónico:</label>
+                  <label htmlFor="requestMoneyEmail">Email:</label>
                   <input
                     id="requestMoneyEmail"
                     type="email"
@@ -643,7 +634,7 @@ const Dashboard = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="requestMoneyAmount">Cantidad:</label>
+                  <label htmlFor="requestMoneyAmount">Amount:</label>
                   <input
                     id="requestMoneyAmount"
                     type="number"
@@ -654,7 +645,7 @@ const Dashboard = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="requestMoneyMessage">Mensaje:</label>
+                  <label htmlFor="requestMoneyMessage">Message:</label>
                   <textarea
                     id="requestMoneyMessage"
                     value={requestMoneyMessage}
