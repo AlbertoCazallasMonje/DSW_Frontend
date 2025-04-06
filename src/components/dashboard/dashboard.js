@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import './dashboard.css';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { GoArrowSwitch, GoCreditCard, GoPlus, GoRead } from "react-icons/go";
+import {
+  GoArrowSwitch,
+  GoCreditCard,
+  GoPlus,
+  GoRead,
+  GoTriangleDown,
+  GoTriangleUp
+} from "react-icons/go";
 import CountUp from './CountUp';
 import SpotlightCard from './SpotlightCard';
 import AnimatedList from './AnimatedList';
@@ -15,12 +22,15 @@ const Dashboard = () => {
   const [userName, setUserName] = useState("");
   const [balance, setBalance] = useState(0);
   const [activeSpotlight, setActiveSpotlight] = useState(null);
+
   const [topUpAmount, setTopUpAmount] = useState("");
   const [userCards, setUserCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
+
   const [creditCardNumber, setCreditCardNumber] = useState("");
   const [creditCardExpirationDate, setCreditCardExpirationDate] = useState("");
   const [creditCardCVV, setCreditCardCVV] = useState("");
+
   const [transactionEmail, setTransactionEmail] = useState("");
   const [transactionAmount, setTransactionAmount] = useState("");
 
@@ -28,46 +38,56 @@ const Dashboard = () => {
   const [requestMoneyAmount, setRequestMoneyAmount] = useState("");
   const [requestMoneyMessage, setRequestMoneyMessage] = useState("");
 
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [loadingPending, setLoadingPending] = useState(false);
+  const [showPendingRequests, setShowPendingRequests] = useState(false);
+
+  // Referencia para la sección de Pending Requests
+  const pendingRef = useRef(null);
+
+  // Cargar datos de cuenta y usuario al iniciar la página
   useEffect(() => {
     if (!sessionToken) return;
     const fetchData = async () => {
       try {
-        const actionResponse = await fetch('http://localhost:3000/action', {
+        // Obtener token y datos de la cuenta
+        const actionRes = await fetch('http://localhost:3000/action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionToken, actionCode: "FIND-USER" })
         });
-        if (!actionResponse.ok) throw new Error('Error en la solicitud del token de acción.');
-        const actionData = await actionResponse.json();
+        if (!actionRes.ok) throw new Error('Error solicitando token de acción.');
+        const actionData = await actionRes.json();
         const actionToken = actionData.actionToken;
-        const findResponse = await fetch('http://localhost:3002/find', {
+        const findRes = await fetch('http://localhost:3002/find', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionToken, actionToken })
         });
-        if (!findResponse.ok) throw new Error('Error en la consulta de la cuenta.');
-        const accountData = await findResponse.json();
+        if (!findRes.ok) throw new Error('Error en la consulta de la cuenta.');
+        const accountData = await findRes.json();
         setUserData(accountData);
         setBalance(accountData.b_balance || 0);
       } catch (error) {
         console.error("Error fetching account data:", error);
       }
       try {
-        const userActionResponse = await fetch('http://localhost:3000/action', {
+        // Obtener token y datos del usuario
+        const userActRes = await fetch('http://localhost:3000/action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionToken, actionCode: "FIND-USER" })
         });
-        if (!userActionResponse.ok) throw new Error('Error fetching user action token.');
-        const userActionData = await userActionResponse.json();
-        const userActionToken = userActionData.actionToken;
-        const userResponse = await fetch('http://localhost:3000/findUser', {
+        if (!userActRes.ok) throw new Error('Error solicitando token de usuario.');
+        const userActData = await userActRes.json();
+        const userActToken = userActData.actionToken;
+        const userRes = await fetch('http://localhost:3000/findUser', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionToken, actionToken: userActionToken })
+          body: JSON.stringify({ sessionToken, actionToken: userActToken })
         });
-        if (!userResponse.ok) throw new Error('Error fetching user data.');
-        const userData = await userResponse.json();
+        if (!userRes.ok) throw new Error('Error en la consulta del usuario.');
+        const userData = await userRes.json();
         setUserName(userData.u_name || "User");
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -76,16 +96,65 @@ const Dashboard = () => {
     fetchData();
   }, [sessionToken]);
 
+  // NOTA: Se elimina la carga automática de transacciones pendientes.
+  // Ahora se cargan al pulsar el botón desplegable.
+
+  // Desplazar la vista hacia la sección de Pending Requests al expandirla
+  useEffect(() => {
+    if (showPendingRequests && pendingRef.current) {
+      pendingRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [showPendingRequests]);
+
+  const loadPendingRequests = async () => {
+    if (loadingPending) return; // Evita llamadas simultáneas
+    setLoadingPending(true);
+    try {
+      const actionRes = await fetch('http://localhost:3000/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken, actionCode: "LOAD-TRANSACTIONS" })
+      });
+      if (!actionRes.ok) throw new Error('Error solicitando token para cargar transacciones.');
+      const actionData = await actionRes.json();
+      const actionToken = actionData.actionToken;
+      const pendingRes = await fetch('http://localhost:3002/loadPendingTransactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken, actionToken })
+      });
+      if (!pendingRes.ok) {
+        const errorData = await pendingRes.json();
+        throw new Error(errorData.message || "Error al cargar transacciones pendientes");
+      }
+      const transactions = await pendingRes.json();
+      setPendingRequests(transactions.transactions || []);
+    } catch (error) {
+      console.error("Error loading pending transactions:", error);
+      alert("Error loading pending transactions: " + error.message);
+    } finally {
+      setLoadingPending(false);
+    }
+  };
+
+  const togglePendingRequests = () => {
+    if (!showPendingRequests) {
+      // Se carga la lista al expandirla
+      loadPendingRequests();
+    }
+    setShowPendingRequests(prev => !prev);
+  };
+
   const handleLogout = async () => {
     try {
-      const response = await fetch('http://localhost:3000/logout', {
+      const res = await fetch('http://localhost:3000/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken })
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Logout failed");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Logout failed");
       }
       navigate("/login");
     } catch (error) {
@@ -97,52 +166,49 @@ const Dashboard = () => {
   const handleProfile = async (e) => {
     e.preventDefault();
     try {
-      const actionResponse = await fetch('http://localhost:3000/action', {
+      const actRes = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionCode: "FIND-USER" })
       });
-      if (!actionResponse.ok) throw new Error('Error en la solicitud del token de acción.');
-      const actionData = await actionResponse.json();
-      const actionToken = actionData.actionToken;
+      if (!actRes.ok) throw new Error('Error solicitando token de acción.');
+      const actData = await actRes.json();
+      const actionToken = actData.actionToken;
       navigate("/update", { state: { sessionToken, actionToken } });
     } catch (error) {
-      console.error('Error al obtener los datos del usuario:', error);
+      console.error('Error fetching profile data:', error);
     }
   };
 
+  // Abre o cierra modales (topUp, transaction, requestMoney)
   const toggleSpotlight = (type) => {
-    if (activeSpotlight === type) {
-      setActiveSpotlight(null);
-      if (type === "topUp") { setUserCards([]); setSelectedCard(null); }
-      else if (type === "transaction") { setTransactionEmail(""); setTransactionAmount(""); }
-      else if (type === "requestMoney") { setRequestMoneyEmail(""); setRequestMoneyAmount(""); setRequestMoneyMessage(""); }
-    } else {
-      setActiveSpotlight(type);
-      if (type === "topUp") { setSelectedCard(null); fetchUserCards(); }
+    setActiveSpotlight(prev => (prev === type ? null : type));
+    if (type === "topUp") {
+      setSelectedCard(null);
+      fetchUserCards();
     }
   };
 
   const fetchUserCards = async () => {
     try {
-      const actionResponse = await fetch('http://localhost:3000/action', {
+      const actRes = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionCode: "SEARCH-CARD" })
       });
-      if (!actionResponse.ok) throw new Error('Error requesting search card action token.');
-      const actionData = await actionResponse.json();
-      const actionToken = actionData.actionToken;
-      const searchResponse = await fetch('http://localhost:3002/searchCards', {
+      if (!actRes.ok) throw new Error('Error solicitando token de búsqueda de tarjeta.');
+      const actData = await actRes.json();
+      const actionToken = actData.actionToken;
+      const searchRes = await fetch('http://localhost:3002/searchCards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionToken })
       });
-      if (!searchResponse.ok) {
-        const errorData = await searchResponse.json();
-        throw new Error(errorData.message || "Error fetching cards.");
+      if (!searchRes.ok) {
+        const errData = await searchRes.json();
+        throw new Error(errData.message || "Error fetching cards.");
       }
-      const cards = await searchResponse.json();
+      const cards = await searchRes.json();
       setUserCards(cards.map(card => `Tarjeta terminada en ${card.cc_number.slice(-4)}`));
     } catch (error) {
       console.error("Error fetching user cards:", error);
@@ -157,22 +223,22 @@ const Dashboard = () => {
       return;
     }
     try {
-      const actionResponse = await fetch('http://localhost:3000/action', {
+      const actRes = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionCode: "ADD-TOP-UP" })
       });
-      if (!actionResponse.ok) throw new Error('Error requesting top-up action token.');
-      const actionData = await actionResponse.json();
-      const actionToken = actionData.actionToken;
-      const topUpResponse = await fetch('http://localhost:3002/topUp', {
+      if (!actRes.ok) throw new Error('Error solicitando token para top-up.');
+      const actData = await actRes.json();
+      const actionToken = actData.actionToken;
+      const topUpRes = await fetch('http://localhost:3002/topUp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionToken, quantity: parseFloat(topUpAmount), card: selectedCard })
       });
-      if (!topUpResponse.ok) {
-        const errorData = await topUpResponse.json();
-        alert("Error while adding top-up: " + errorData.message);
+      if (!topUpRes.ok) {
+        const errData = await topUpRes.json();
+        alert("Error while adding top-up: " + errData.message);
       } else {
         alert("Top-up added successfully.");
         setActiveSpotlight(null);
@@ -182,23 +248,23 @@ const Dashboard = () => {
         setSelectedCard(null);
       }
     } catch (error) {
-      console.error("Error while processing top-up:", error);
-      alert("Error while processing top-up.");
+      console.error("Error processing top-up:", error);
+      alert("Error processing top-up.");
     }
   };
 
   const handleCreditCardSubmit = async (e) => {
     e.preventDefault();
     try {
-      const actionResponse = await fetch('http://localhost:3000/action', {
+      const actRes = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionCode: "CREATE-CARD" })
       });
-      if (!actionResponse.ok) throw new Error('Error requesting create card action token.');
-      const actionData = await actionResponse.json();
-      const actionToken = actionData.actionToken;
-      const createCardResponse = await fetch('http://localhost:3002/createCard', {
+      if (!actRes.ok) throw new Error('Error solicitando token para crear tarjeta.');
+      const actData = await actRes.json();
+      const actionToken = actData.actionToken;
+      const cardRes = await fetch('http://localhost:3002/createCard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -207,9 +273,9 @@ const Dashboard = () => {
           card: { cc_number: creditCardNumber, cc_expirationDate: creditCardExpirationDate, cc_cvv: creditCardCVV }
         })
       });
-      if (!createCardResponse.ok) {
-        const errorData = await createCardResponse.json();
-        alert("Error while creating card: " + errorData.message);
+      if (!cardRes.ok) {
+        const errData = await cardRes.json();
+        alert("Error while creating card: " + errData.message);
       } else {
         alert("Credit card created successfully.");
         setActiveSpotlight(null);
@@ -218,8 +284,8 @@ const Dashboard = () => {
         setCreditCardCVV("");
       }
     } catch (error) {
-      console.error("Error while creating card:", error);
-      alert("Error while creating card.");
+      console.error("Error creating card:", error);
+      alert("Error creating card.");
     }
   };
 
@@ -239,22 +305,22 @@ const Dashboard = () => {
       return;
     }
     try {
-      const actionResponse = await fetch('http://localhost:3000/action', {
+      const actRes = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionCode: "PERFORM-TRANSACTION" })
       });
-      if (!actionResponse.ok) throw new Error('Error requesting transaction action token.');
-      const actionData = await actionResponse.json();
-      const actionToken = actionData.actionToken;
-      const transactionResponse = await fetch('http://localhost:3002/performTransaction', {
+      if (!actRes.ok) throw new Error('Error solicitando token para transacción.');
+      const actData = await actRes.json();
+      const actionToken = actData.actionToken;
+      const transRes = await fetch('http://localhost:3002/performTransaction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionToken, email: transactionEmail, amount: parseFloat(transactionAmount) })
       });
-      if (!transactionResponse.ok) {
-        const errorData = await transactionResponse.json();
-        alert("Error while performing transaction: " + errorData.error);
+      if (!transRes.ok) {
+        const errData = await transRes.json();
+        alert("Error while performing transaction: " + errData.error);
       } else {
         alert("Transaction performed successfully.");
         setActiveSpotlight(null);
@@ -263,8 +329,8 @@ const Dashboard = () => {
         setTransactionAmount("");
       }
     } catch (error) {
-      console.error("Error while processing transaction:", error);
-      alert("Error while processing transaction.");
+      console.error("Error processing transaction:", error);
+      alert("Error processing transaction.");
     }
   };
 
@@ -279,15 +345,15 @@ const Dashboard = () => {
       return;
     }
     try {
-      const actionResponse = await fetch('http://localhost:3000/action', {
+      const actRes = await fetch('http://localhost:3000/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionCode: "PERFORM-TRANSACTION" })
       });
-      if (!actionResponse.ok) throw new Error('Error requesting transaction action token.');
-      const actionData = await actionResponse.json();
-      const actionToken = actionData.actionToken;
-      const requestMoneyResponse = await fetch('http://localhost:3002/requestMoney', {
+      if (!actRes.ok) throw new Error('Error solicitando token para request money.');
+      const actData = await actRes.json();
+      const actionToken = actData.actionToken;
+      const reqMoneyRes = await fetch('http://localhost:3002/requestMoney', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -298,9 +364,9 @@ const Dashboard = () => {
           message: requestMoneyMessage
         })
       });
-      if (!requestMoneyResponse.ok) {
-        const errorData = await requestMoneyResponse.json();
-        alert("Error while requesting money: " + errorData.message);
+      if (!reqMoneyRes.ok) {
+        const errData = await reqMoneyRes.json();
+        alert("Error while requesting money: " + errData.message);
       } else {
         alert("Money request sent successfully.");
         setActiveSpotlight(null);
@@ -309,8 +375,43 @@ const Dashboard = () => {
         setRequestMoneyMessage("");
       }
     } catch (error) {
-      console.error("Error while processing money request:", error);
-      alert("Error while processing money request.");
+      console.error("Error processing money request:", error);
+      alert("Error processing money request.");
+    }
+  };
+
+  const handleResolveRequest = async (transactionId, resolution) => {
+    if (resolution !== "ACCEPTED" && resolution !== "DENIED") {
+      console.error("Valor de resolución no válido:", resolution);
+      return;
+    }
+
+    try {
+      const actRes = await fetch('http://localhost:3000/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken, actionCode: "PERFORM-TRANSACTION" })
+      });
+      if (!actRes.ok) throw new Error('Error solicitando token para resolver request.');
+      const actData = await actRes.json();
+      const actionToken = actData.actionToken;
+
+      const resReq = await fetch('http://localhost:3002/resolveRequest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken, actionToken, transactionId, resolution })
+      });
+
+      if (!resReq.ok) {
+        const errData = await resReq.json();
+        alert("Error while resolving request: " + errData.error);
+      } else {
+        alert("Request resolved successfully.");
+        loadPendingRequests();
+      }
+    } catch (error) {
+      console.error("Error processing resolve request:", error);
+      alert("Error processing resolve request: " + error.message);
     }
   };
 
@@ -355,6 +456,41 @@ const Dashboard = () => {
             <GoRead size={24} />
           </button>
         </div>
+
+
+        <section className="pending-requests" ref={pendingRef}>
+          <div className="pending-requests-header">
+            <h2>Pending Requests</h2>
+            <button className="toggle-pending-btn" onClick={togglePendingRequests}>
+              {showPendingRequests ? <GoTriangleUp size={20} /> : <GoTriangleDown size={20} />}
+            </button>
+          </div>
+          {showPendingRequests && (
+            pendingRequests.length > 0 ? (
+              <AnimatedList
+                items={pendingRequests.map(item => (
+                  <div key={item.t_id} className="pending-item">
+                    <div>
+                      <strong>ID:</strong> {item.t_id} | <strong>Amount:</strong> {item.amount}€
+                      {item.t_message && <> | <strong>Message:</strong> {item.t_message}</>}
+                    </div>
+                    <div className="button-row">
+                      <button className="btn glassy-button" onClick={() => handleResolveRequest(item.t_id, "ACCEPTED")}>
+                        Accept
+                      </button>
+                      <button className="btn glassy-button" onClick={() => handleResolveRequest(item.t_id, "DENIED")}>
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              />
+            ) : (
+              <p>No pending requests.</p>
+            )
+          )}
+        </section>
+
         {activeSpotlight === "topUp" && (
           <div className="top-up-wrapper">
             <SpotlightCard className="custom-spotlight-card" spotlightColor="rgba(125, 36, 199, 0.81)">
@@ -363,7 +499,7 @@ const Dashboard = () => {
                   <h2>Selecciona una tarjeta</h2>
                   <AnimatedList
                     items={userCards}
-                    onItemSelect={(item, index) => { setSelectedCard(item); }}
+                    onItemSelect={(item, index) => setSelectedCard(item)}
                     showGradients={true}
                     enableArrowNavigation={true}
                     displayScrollbar={true}
