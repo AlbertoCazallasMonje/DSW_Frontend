@@ -27,9 +27,11 @@ const Login = () => {
             if (response.ok) {
                 const data = await response.json();
                 console.log('Login successful:', data);
-                navigate('/dashboard', { state: { token: data.sessionToken } });
-            } else {
-                console.error('Login failed:', response.statusText);
+                if (data.is_admin) {
+                    navigate('/admin-dashboard', { state: { token: data.sessionToken } });
+                } else {
+                    navigate('/dashboard', { state: { token: data.sessionToken } });
+                }
             }
         } catch (error) {
             console.error('Error:', error);
