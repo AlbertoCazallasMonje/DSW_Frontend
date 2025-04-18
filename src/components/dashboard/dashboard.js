@@ -407,78 +407,92 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard-page">
-      <div className="gradient-background">
-      </div>
-      <header className="header">
-        <nav className="navbar">
-          <div className="navbar-logo">
-            <h2>Orion</h2>
-          </div>
-          <div className="navbar-buttons">
-            <button className="btn logout" onClick={handleLogout}>Logout</button>
-            <button className="btn profile" onClick={handleProfile}>User Profile</button>
-          </div>
-        </nav>
-      </header>
-      <main>
-        <div className="banner">
-          <h1>Welcome to your Dashboard</h1>
-          <h2>{userName || "User"}</h2>
-        </div>
-        <section className="features">
-          <h2>Balance:</h2>
-          <CountUp from={0} to={balance} duration={0.25} separator="," className="count-up-text" />
-          <span> €</span>
-        </section>
-        <div className="button-container">
-          <button className="glassy-button" onClick={() => toggleSpotlight("topUp")}>
-            <GoPlus size={24} />
-          </button>
-          <button className="glassy-button" onClick={() => toggleSpotlight("transaction")}>
-            <GoArrowSwitch size={24} />
-          </button>
-          <button className="glassy-button" onClick={() => toggleSpotlight("creditCard")}>
-            <GoCreditCard size={24} />
-          </button>
-          <button className="glassy-button" onClick={() => toggleSpotlight("requestMoney")}>
-            <GoRead size={24} />
-          </button>
-        </div>
+      <div className="dashboard-page">
+        <div className="gradient-background" />
 
+        <header className="header">
+          <nav className="navbar">
+            <div className="navbar-logo">
+              <h2>Orion</h2>
+            </div>
+            <div className="navbar-buttons">
+              <button className="btn logout" onClick={handleLogout}>Logout</button>
+              <button className="btn profile" onClick={handleProfile}>User Profile</button>
+            </div>
+          </nav>
+        </header>
 
-        <section className="pending-requests" ref={pendingRef}>
-          <div className="pending-requests-header">
-            <h2>Pending Requests</h2>
-            <button className="toggle-pending-btn" onClick={togglePendingRequests}>
-              {showPendingRequests ? <GoTriangleUp size={20} /> : <GoTriangleDown size={20} />}
+        <main className="main">
+          <div className="banner">
+            <h1>Welcome to your Dashboard</h1>
+            <h2>{userName || "User"}</h2>
+          </div>
+
+          <section className="features">
+            <h2>Balance:</h2>
+            <CountUp
+                from={0}
+                to={balance}
+                duration={0.25}
+                separator=","
+                className="count-up-text"
+            />
+            <span> €</span>
+          </section>
+
+          <div className="button-container">
+            <button className="glassy-button" onClick={() => toggleSpotlight("topUp")}>
+              <GoPlus size={24} />
+            </button>
+            <button className="glassy-button" onClick={() => toggleSpotlight("transaction")}>
+              <GoArrowSwitch size={24} />
+            </button>
+            <button className="glassy-button" onClick={() => toggleSpotlight("creditCard")}>
+              <GoCreditCard size={24} />
+            </button>
+            <button className="glassy-button" onClick={() => toggleSpotlight("requestMoney")}>
+              <GoRead size={24} />
             </button>
           </div>
-          {showPendingRequests && (
-            pendingRequests.length > 0 ? (
-              <AnimatedList
-                items={pendingRequests.map(item => (
-                  <div key={item.t_id} className="pending-item">
-                    <div>
-                      <strong>ID:</strong> {item.t_id} | <strong>Amount:</strong> {item.amount}€
-                      {item.t_message && <> | <strong>Message:</strong> {item.t_message}</>}
-                    </div>
-                    <div className="button-row">
-                      <button className="btn glassy-button" onClick={() => handleResolveRequest(item.t_id, "ACCEPTED")}>
-                        Accept
-                      </button>
-                      <button className="btn glassy-button" onClick={() => handleResolveRequest(item.t_id, "DENIED")}>
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              />
-            ) : (
-              <p>No pending requests.</p>
-            )
-          )}
-        </section>
+
+          <section className="pending-requests" ref={pendingRef}>
+            <div className="pending-requests-header">
+              <h2>Pending Requests</h2>
+              <button className="toggle-pending-btn" onClick={togglePendingRequests}>
+                {showPendingRequests ? <GoTriangleUp size={20} /> : <GoTriangleDown size={20} />}
+              </button>
+            </div>
+            {showPendingRequests && (
+                pendingRequests.length > 0 ? (
+                    <AnimatedList
+                        items={pendingRequests.map(item => (
+                            <div key={item.t_id} className="pending-item">
+                              <div>
+                                <strong>ID:</strong> {item.t_id} | <strong>Amount:</strong> {item.amount}€
+                                {item.t_message && <> | <strong>Message:</strong> {item.t_message}</>}
+                              </div>
+                              <div className="button-row">
+                                <button
+                                    className="btn glassy-button"
+                                    onClick={() => handleResolveRequest(item.t_id, "ACCEPTED")}
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                    className="btn glassy-button"
+                                    onClick={() => handleResolveRequest(item.t_id, "DENIED")}
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            </div>
+                        ))}
+                    />
+                ) : (
+                    <p>No pending requests.</p>
+                )
+            )}
+          </section>
 
         {activeSpotlight === "topUp" && (
           <div className="top-up-wrapper">
