@@ -44,6 +44,11 @@ const Dashboard = () => {
     const [bulkEmails, setBulkEmails] = useState([]);
     const [bulkAmount, setBulkAmount] = useState("");
 
+    const [splitTransactions, setSplitTransactions] = useState([]);
+    const [loadingSplits, setLoadingSplits] = useState(false);
+    const [showSplits, setShowSplits] = useState(false);
+    const splitsRef = useRef(null);
+
     const [pendingRequests, setPendingRequests] = useState([]);
     const [loadingPending, setLoadingPending] = useState(false);
     const [showPendingRequests, setShowPendingRequests] = useState(false);
@@ -375,13 +380,13 @@ const Dashboard = () => {
                     amount: parseFloat(bulkAmount)
                 })
             });
+            console.log(bulkRes);
             if (!bulkRes.ok) {
                 const errData = await bulkRes.json();
                 alert("Error while performing bulk transaction: " + errData.error);
             } else {
                 alert("Bulk transaction performed successfully.");
                 setActiveSpotlight(null);
-                setBalance(prev => prev - parseFloat(bulkAmount) * bulkEmails.length);
                 setBulkEmails([]);
                 setBulkEmailInput("");
                 setBulkAmount("");
@@ -467,6 +472,48 @@ const Dashboard = () => {
             alert("Error processing resolve request: " + error.message);
         }
     };
+
+    const loadSplitTransactions = async () => {
+        if (loadingSplits) return;
+        setLoadingSplits(true);
+        try {
+            const actRes = await fetch('http://localhost:3000/action', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ sessionToken, actionCode: "LOAD-TRANSACTIONS" })
+            });
+            if (!actRes.ok) throw new Error('Error requesting token');
+            const { actionToken } = await actRes.json();
+
+            const res = await fetch('http://localhost:3002/loadSplitTransactions', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ sessionToken, actionToken })
+            });
+            if (!res.ok) {
+                const e = await res.json();
+                throw new Error(e.error);
+            }
+            const { splits } = await res.json();
+            setSplitTransactions(splits);
+        } catch (e) {
+            console.error(e);
+            alert("Error loading split transactions: "+e.message);
+        } finally {
+            setLoadingSplits(false);
+        }
+    };
+
+    const toggleSplits = () => {
+        if (!showSplits) loadSplitTransactions();
+        setShowSplits(prev => !prev);
+    };
+
+    useEffect(() => {
+        if (showSplits && splitsRef.current) {
+            splitsRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [showSplits]);
 
     return (
         <div className="dashboard-page">
@@ -800,6 +847,34 @@ const Dashboard = () => {
                             />
                         ) : (
                             <p>No pending requests.</p>
+                        )
+                    )}
+                </section>
+                <section className="pending-requests" ref={splitsRef}>
+                    <div className="pending-requests-header">
+                        <h2>Split Transactions</h2>
+                        <button className="toggle-pending-btn" onClick={toggleSplits}>
+                            {showSplits ? <GoTriangleUp size={20}/> : <GoTriangleDown size={20}/>}
+                        </button>
+                    </div>
+                    {showSplits && (
+                        splitTransactions.length > 0 ? (
+                            <AnimatedList
+                                items={splitTransactions.map(tx => (
+                                    <div key={tx.t_id} className="pending-item">
+                                        <div>
+                                            <strong>Group:</strong> {tx.split_group_id} |
+                                            <strong>From:</strong> {tx.dni_sender} |
+                                            <strong>Amount:</strong> {tx.amount}€
+                                        </div>
+                                        <div className="button-row">
+                                            <span className="status">{tx.t_state}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            />
+                        ) : (
+                            <p>No split transactions.</p>
                         )
                     )}
                 </section>
