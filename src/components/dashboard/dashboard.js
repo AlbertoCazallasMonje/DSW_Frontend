@@ -972,7 +972,7 @@ const Dashboard = () => {
                                                     </div>
                                                     {paymentMethod === "card" && (
                                                         <div className="form-group">
-                                                            <label>Select card (visual only):</label>
+                                                            <label>Select card:</label>
                                                             <AnimatedList
                                                                 items={userCards.map(c => c.label)}
                                                                 onItemSelect={(_, idx) => setTransactionCard(userCards[idx].id)}
