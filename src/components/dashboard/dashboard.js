@@ -901,7 +901,7 @@ const Dashboard = () => {
                                     />
                                 )}
                                 <div className="form-group">
-                                    <label htmlFor="bulkAmount">Amount per email:</label>
+                                    <label htmlFor="bulkAmount">Amount to split:</label>
                                     <input
                                         id="bulkAmount"
                                         type="number"
