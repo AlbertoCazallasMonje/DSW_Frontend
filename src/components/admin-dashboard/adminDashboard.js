@@ -22,7 +22,7 @@ const AdminDashboard = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionCode })
       });
-      if (!actionRes.ok) throw new Error('Error solicitando token de acción.');
+      if (!actionRes.ok) throw new Error('Error fetching action token.');
       const actionData = await actionRes.json();
       return actionData.actionToken;
     } catch (error) {
@@ -40,11 +40,11 @@ const AdminDashboard = () => {
         body: JSON.stringify({ sessionToken, actionToken })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al cargar usuarios");
+      if (!res.ok) throw new Error(data.error || "Error loading users");
       setUsers(data);
     } catch (error) {
-      console.error("Error al cargar usuarios:", error);
-      alert("Error al cargar usuarios: " + error.message);
+      console.error("Error loading users:", error);
+      alert("Error loading users: " + error.message);
     }
   };
 
@@ -57,11 +57,11 @@ const AdminDashboard = () => {
         body: JSON.stringify({ sessionToken, actionToken })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al cargar transacciones");
+      if (!res.ok) throw new Error(data.error || "Error loading transactions");
       setTransactions(data.transactions);
     } catch (error) {
-      console.error("Error al cargar transacciones:", error);
-      alert("Error al cargar transacciones: " + error.message);
+      console.error("Error loading transactions:", error);
+      alert("Error loading transactions: " + error.message);
     }
   };
 
@@ -77,7 +77,7 @@ const AdminDashboard = () => {
     if (activeComponent === "users") {
       return (
         <div className="content">
-          <h1>Usuarios</h1>
+          <h1>Users</h1>
           {users && users.length > 0 ? (
             <div style={{ display: "flex", justifyContent: "center" }}>
               <AnimatedList
@@ -87,24 +87,24 @@ const AdminDashboard = () => {
               />
             </div>
           ) : (
-            <p>No se encontraron usuarios.</p>
+            <p>No users found.</p>
           )}
         </div>
       );
     } else if (activeComponent === "transactions") {
       return (
         <div className="content">
-          <h1>Transacciones</h1>
+          <h1>Transactions</h1>
           {transactions && transactions.length > 0 ? (
             <div style={{ display: "flex", justifyContent: "center" }}>
               <AnimatedList
                 items={transactions.map(txn =>
-                  `ID: ${txn.t_id} | Remitente: ${txn.dni_sender} | Destinatario: ${txn.dni_receiver} | Monto: ${txn.amount} | Estado: ${txn.t_state} | Fecha: ${new Date(txn.t_date).toLocaleString()}`
+                  `ID: ${txn.t_id} | Sender: ${txn.dni_sender} | Receiver: ${txn.dni_receiver} | Amount: ${txn.amount} | State: ${txn.t_state} | Date: ${new Date(txn.t_date).toLocaleString()}`
                 )}
               />
             </div>
           ) : (
-            <p>No se encontraron transacciones.</p>
+            <p>No transactions found.</p>
           )}
         </div>
       );
@@ -114,12 +114,12 @@ const AdminDashboard = () => {
   const dockItems = [
     {
       icon: <FaUsers size={24} />,
-      label: "Usuarios",
+      label: "Users",
       onClick: () => setActiveComponent("users"),
     },
     {
       icon: <FaExchangeAlt size={24} />,
-      label: "Transacciones",
+      label: "Transactions",
       onClick: () => setActiveComponent("transactions"),
     },
   ];
@@ -156,7 +156,7 @@ const AdminDashboard = () => {
         <header className="dashboard-header">
           <h2>Admin Dashboard</h2>
           <button onClick={handleLogout} className="logout-button">
-            Cerrar Sesión
+            Logout
           </button>
         </header>
 

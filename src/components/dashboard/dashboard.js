@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, {useState, useEffect, useRef} from "react";
 import addDays from 'date-fns/addDays';
 import './dashboard.css';
-import { useLocation, useNavigate } from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import {
     GoArrowSwitch,
     GoCreditCard,
@@ -18,28 +18,28 @@ import AnimatedList from './AnimatedList';
 const TEST_PM_ID = "pm_card_visa";
 const Dashboard = () => {
     const navigate = useNavigate();
-    const { state } = useLocation();
+    const {state} = useLocation();
     const sessionToken = state?.token;
 
     const fetchActionToken = async (actionCode) => {
         const res = await fetch('http://localhost:3000/action', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionToken, actionCode })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({sessionToken, actionCode})
         });
         if (!res.ok) throw new Error(`Error requesting token for ${actionCode}`);
-        const { actionToken } = await res.json();
+        const {actionToken} = await res.json();
         return actionToken;
     };
 
-    const processCardPayment = async ({ amount, description, existingTxId = null }) => {
+    const processCardPayment = async ({amount, description, existingTxId = null}) => {
         let txId = existingTxId;
 
         if (!txId) {
             const txToken = await fetchActionToken("PERFORM-TRANSACTION");
             const txRes = await fetch('http://localhost:3002/performTransaction', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     sessionToken,
                     actionToken: txToken,
@@ -59,7 +59,7 @@ const Dashboard = () => {
         const posToken = await fetchActionToken("CREATE-POS-ORDER");
         const posRes = await fetch('http://localhost:3002/createPosOrder', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 sessionToken,
                 actionToken: posToken,
@@ -77,7 +77,7 @@ const Dashboard = () => {
         const payToken = await fetchActionToken("PAY-POS-ORDER");
         const payRes = await fetch('http://localhost:3002/payPosOrder', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 sessionToken,
                 actionToken: payToken,
@@ -138,7 +138,7 @@ const Dashboard = () => {
     // Payment method and edit request
     const [paymentMethod, setPaymentMethod] = useState("balance"); // "balance" o "card"
     const [transactionCard, setTransactionCard] = useState(null);   // fachada visual
-    const [editRequest, setEditRequest] = useState({ id: null, resolution: null });
+    const [editRequest, setEditRequest] = useState({id: null, resolution: null});
 
     useEffect(() => {
         if (!sessionToken) return;
@@ -147,8 +147,8 @@ const Dashboard = () => {
                 const token1 = await fetchActionToken("FIND-USER");
                 const findRes = await fetch('http://localhost:3002/find', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionToken, actionToken: token1 })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sessionToken, actionToken: token1})
                 });
                 const acct = await findRes.json();
                 setUserData(acct);
@@ -160,8 +160,8 @@ const Dashboard = () => {
                 const token2 = await fetchActionToken("FIND-USER");
                 const userRes = await fetch('http://localhost:3000/findUser', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionToken, actionToken: token2 })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sessionToken, actionToken: token2})
                 });
                 const u = await userRes.json();
                 setUserName(u.u_name || "User");
@@ -172,10 +172,10 @@ const Dashboard = () => {
     }, [sessionToken]);
 
     useEffect(() => {
-        if (showPendingRequests && pendingRef.current) pendingRef.current.scrollIntoView({ behavior: "smooth" });
+        if (showPendingRequests && pendingRef.current) pendingRef.current.scrollIntoView({behavior: "smooth"});
     }, [showPendingRequests]);
     useEffect(() => {
-        if (showSplits && splitsRef.current) splitsRef.current.scrollIntoView({ behavior: "smooth" });
+        if (showSplits && splitsRef.current) splitsRef.current.scrollIntoView({behavior: "smooth"});
     }, [showSplits]);
 
     const fetchUserCards = async () => {
@@ -183,13 +183,13 @@ const Dashboard = () => {
             const token = await fetchActionToken("SEARCH-CARD");
             const res = await fetch('http://localhost:3002/searchCards', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionToken, actionToken: token })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({sessionToken, actionToken: token})
             });
             if (!res.ok) throw new Error("Error fetching cards");
             const cards = await res.json();
             const formatted = cards.map(c => ({
-                id:    c.paymentMethodId,
+                id: c.paymentMethodId,
                 label: `Card ending in ${c.cc_number.slice(-4)}`
             }));
             setUserCards(formatted);
@@ -207,7 +207,7 @@ const Dashboard = () => {
                 const posToken = await fetchActionToken("CREATE-POS-ORDER");
                 const posRes = await fetch('http://localhost:3002/createPosOrder', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         sessionToken,
                         actionToken: posToken,
@@ -220,12 +220,12 @@ const Dashboard = () => {
                     const err = await posRes.json();
                     throw new Error("Error creating POS order: " + err.error);
                 }
-                const { pos_id } = await posRes.json();
+                const {pos_id} = await posRes.json();
 
                 const payToken = await fetchActionToken("PAY-POS-ORDER");
                 const payRes = await fetch('http://localhost:3002/payPosOrder', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         sessionToken,
                         actionToken: payToken,
@@ -237,7 +237,7 @@ const Dashboard = () => {
                     const err = await payRes.json();
                     throw new Error("Error paying POS order: " + err.error);
                 }
-                const { transactionId } = await payRes.json();
+                const {transactionId} = await payRes.json();
 
                 setBalance(b => b + parseFloat(topUpAmount));
                 alert(`Top-up con tarjeta completado. TxID: ${transactionId}`);
@@ -245,7 +245,7 @@ const Dashboard = () => {
                 const token = await fetchActionToken("ADD-TOP-UP");
                 const res = await fetch('http://localhost:3002/topUp', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         sessionToken,
                         actionToken: token,
@@ -278,7 +278,7 @@ const Dashboard = () => {
                 const txToken = await fetchActionToken("PERFORM-TRANSACTION");
                 const txRes = await fetch('http://localhost:3002/performTransaction', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         sessionToken,
                         actionToken: txToken,
@@ -292,12 +292,12 @@ const Dashboard = () => {
                     const err = await txRes.json();
                     throw new Error("Error performing transaction: " + err.error);
                 }
-                const { transactionId } = await txRes.json();
+                const {transactionId} = await txRes.json();
 
                 const posToken = await fetchActionToken("CREATE-POS-ORDER");
                 const posRes = await fetch('http://localhost:3002/createPosOrder', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         sessionToken,
                         actionToken: posToken,
@@ -310,12 +310,12 @@ const Dashboard = () => {
                     const err = await posRes.json();
                     throw new Error("Error creating POS order: " + err.error);
                 }
-                const { pos_id } = await posRes.json();
+                const {pos_id} = await posRes.json();
 
                 const payToken = await fetchActionToken("PAY-POS-ORDER");
                 const payRes = await fetch('http://localhost:3002/payPosOrder', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         sessionToken,
                         actionToken: payToken,
@@ -335,7 +335,7 @@ const Dashboard = () => {
                 const token = await fetchActionToken("PERFORM-TRANSACTION");
                 const res = await fetch('http://localhost:3002/performTransaction', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         sessionToken,
                         actionToken: token,
@@ -369,7 +369,7 @@ const Dashboard = () => {
             const token = await fetchActionToken("PERFORM-TRANSACTION");
             const reqRes = await fetch('http://localhost:3002/requestMoney', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     sessionToken,
                     actionToken: token,
@@ -378,7 +378,7 @@ const Dashboard = () => {
                     message: requestMoneyMessage
                 })
             });
-            const { transactionId } = await reqRes.json();
+            const {transactionId} = await reqRes.json();
             alert(`Money request sent successfully. ID: ${transactionId}`);
             setActiveSpotlight(null);
             setRequestMoneyEmail("");
@@ -405,7 +405,7 @@ const Dashboard = () => {
             const token = await fetchActionToken("PERFORM-TRANSACTION");
             const bulkRes = await fetch('http://localhost:3002/performBulkTransaction', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     sessionToken,
                     actionToken: token,
@@ -419,7 +419,9 @@ const Dashboard = () => {
             } else {
                 alert("Bulk transaction performed successfully.");
                 setActiveSpotlight(null);
-                setBulkEmails([]); setBulkEmailInput(""); setBulkAmount("");
+                setBulkEmails([]);
+                setBulkEmailInput("");
+                setBulkAmount("");
             }
         } catch (error) {
             console.error("Error processing bulk transaction:", error);
@@ -435,10 +437,10 @@ const Dashboard = () => {
             const token = await fetchActionToken("LOAD-TRANSACTIONS");
             const res = await fetch('http://localhost:3002/loadPendingTransactions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionToken, actionToken: token })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({sessionToken, actionToken: token})
             });
-            const { transactions } = await res.json();
+            const {transactions} = await res.json();
             setPendingRequests(transactions);
         } catch (error) {
             console.error("Error loading pending transactions:", error);
@@ -455,7 +457,7 @@ const Dashboard = () => {
     // Resolve request handler
     const handleResolveSubmit = async (e) => {
         e.preventDefault();
-        const { id, resolution } = editRequest;
+        const {id, resolution} = editRequest;
         try {
             if (resolution === "ACCEPTED" && paymentMethod === "card") {
                 await processCardPayment({
@@ -467,12 +469,13 @@ const Dashboard = () => {
             const token = await fetchActionToken("PERFORM-TRANSACTION");
             await fetch('http://localhost:3002/resolveRequest', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionToken, actionToken: token, transactionId: id, resolution })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({sessionToken, actionToken: token, transactionId: id, resolution})
             });
             alert("Request resolved successfully.");
-            setEditRequest({ id: null, resolution: null });
-            setPaymentMethod("balance"); setTransactionCard(null);
+            setEditRequest({id: null, resolution: null});
+            setPaymentMethod("balance");
+            setTransactionCard(null);
             loadPendingRequests();
         } catch (error) {
             console.error("Error resolving request:", error);
@@ -488,10 +491,10 @@ const Dashboard = () => {
             const token = await fetchActionToken("LOAD-TRANSACTIONS");
             const res = await fetch('http://localhost:3002/loadSplitTransactions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionToken, actionToken: token })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({sessionToken, actionToken: token})
             });
-            const { splits } = await res.json();
+            const {splits} = await res.json();
             setSplitTransactions(splits);
         } catch (error) {
             console.error("Error loading split transactions:", error);
@@ -512,7 +515,7 @@ const Dashboard = () => {
             const token = await fetchActionToken("CREATE-CARD");
             const res = await fetch('http://localhost:3002/createCard', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     sessionToken,
                     actionToken: token,
@@ -529,7 +532,9 @@ const Dashboard = () => {
             } else {
                 alert("Credit card created successfully.");
                 setActiveSpotlight(null);
-                setCreditCardNumber(""); setCreditCardExpirationDate(""); setCreditCardCVV("");
+                setCreditCardNumber("");
+                setCreditCardExpirationDate("");
+                setCreditCardCVV("");
             }
         } catch (error) {
             console.error("Error creating card:", error);
@@ -540,7 +545,11 @@ const Dashboard = () => {
     // Logout & Profile
     const handleLogout = async () => {
         try {
-            await fetch('http://localhost:3000/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionToken }) });
+            await fetch('http://localhost:3000/logout', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({sessionToken})
+            });
             navigate("/login");
         } catch (error) {
             console.error("Error during logout:", error);
@@ -551,7 +560,7 @@ const Dashboard = () => {
         e.preventDefault();
         try {
             const token = await fetchActionToken("FIND-USER");
-            navigate("/update", { state: { sessionToken, actionToken: token } });
+            navigate("/update", {state: {sessionToken, actionToken: token}});
         } catch (error) {
             console.error("Error fetching profile data:", error);
         }
@@ -569,13 +578,15 @@ const Dashboard = () => {
             setTransactionCard(null);
         }
         if (type === "multiTransaction") {
-            setBulkEmails([]); setBulkEmailInput(""); setBulkAmount("");
+            setBulkEmails([]);
+            setBulkEmailInput("");
+            setBulkAmount("");
         }
     };
 
     return (
         <div className="dashboard-page">
-            <div className="gradient-background" />
+            <div className="gradient-background"/>
 
             <header className="header">
                 <nav className="navbar">
@@ -597,17 +608,22 @@ const Dashboard = () => {
                 {/* Balance */}
                 <section className="features">
                     <h2>Balance:</h2>
-                    <CountUp from={0} to={balance} duration={0.25} separator="," className="count-up-text" />
+                    <CountUp from={0} to={balance} duration={0.25} separator="," className="count-up-text"/>
                     <span> €</span>
                 </section>
 
                 {/* Principal Buttons */}
                 <div className="button-container">
-                    <button className="glassy-button" onClick={() => toggleSpotlight("topUp")}><GoPlus size={24} /></button>
-                    <button className="glassy-button" onClick={() => toggleSpotlight("transaction")}><GoArrowSwitch size={24} /></button>
-                    <button className="glassy-button" onClick={() => toggleSpotlight("creditCard")}><GoCreditCard size={24} /></button>
-                    <button className="glassy-button" onClick={() => toggleSpotlight("requestMoney")}><GoRead size={24} /></button>
-                    <button className="glassy-button" onClick={() => toggleSpotlight("multiTransaction")}><GoPeople size={24} /></button>
+                    <button className="glassy-button" onClick={() => toggleSpotlight("topUp")}><GoPlus size={24}/>
+                    </button>
+                    <button className="glassy-button" onClick={() => toggleSpotlight("transaction")}><GoArrowSwitch
+                        size={24}/></button>
+                    <button className="glassy-button" onClick={() => toggleSpotlight("creditCard")}><GoCreditCard
+                        size={24}/></button>
+                    <button className="glassy-button" onClick={() => toggleSpotlight("requestMoney")}><GoRead
+                        size={24}/></button>
+                    <button className="glassy-button" onClick={() => toggleSpotlight("multiTransaction")}><GoPeople
+                        size={24}/></button>
                 </div>
 
                 {/* Top-Up */}
@@ -728,7 +744,8 @@ const Dashboard = () => {
                                 </div>
                                 <div className="button-row">
                                     <button type="submit" className="btn glassy-button">Submit</button>
-                                    <button type="button" className="btn glassy-button" onClick={() => setActiveSpotlight(null)}>
+                                    <button type="button" className="btn glassy-button"
+                                            onClick={() => setActiveSpotlight(null)}>
                                         Cancel
                                     </button>
                                 </div>
@@ -936,7 +953,7 @@ const Dashboard = () => {
                     <div className="pending-requests-header">
                         <h2>Pending Requests</h2>
                         <button className="toggle-pending-btn" onClick={togglePendingRequests}>
-                            {showPendingRequests ? <GoTriangleUp size={20} /> : <GoTriangleDown size={20} />}
+                            {showPendingRequests ? <GoTriangleUp size={20}/> : <GoTriangleDown size={20}/>}
                         </button>
                     </div>
                     {showPendingRequests && (
@@ -945,7 +962,11 @@ const Dashboard = () => {
                                 items={pendingRequests.map(item => (
                                     <div key={item.t_id} className="pending-item">
                                         <div>
-                                            <strong>ID:</strong> {item.t_id} | <strong>Amount:</strong> {item.amount}€
+                                            <strong>From:</strong> {item.senderName}
+                                            {' | '}
+                                            <strong>Message:</strong> {item.t_message}
+                                            {' | '}
+                                            <strong>Amount:</strong> {item.amount}€
                                         </div>
                                         <div className="button-row">
                                             {editRequest.id === item.t_id ? (
@@ -983,12 +1004,13 @@ const Dashboard = () => {
                                                         </div>
                                                     )}
                                                     <div className="button-row">
-                                                        <button type="submit" className="btn glassy-button">Confirm</button>
+                                                        <button type="submit" className="btn glassy-button">Confirm
+                                                        </button>
                                                         <button
                                                             type="button"
                                                             className="btn glassy-button"
                                                             onClick={() => {
-                                                                setEditRequest({ id: null, resolution: null });
+                                                                setEditRequest({id: null, resolution: null});
                                                                 setPaymentMethod("balance");
                                                                 setTransactionCard(null);
                                                             }}
@@ -1002,7 +1024,7 @@ const Dashboard = () => {
                                                     <button
                                                         className="btn glassy-button"
                                                         onClick={() => {
-                                                            setEditRequest({ id: item.t_id, resolution: "ACCEPTED" });
+                                                            setEditRequest({id: item.t_id, resolution: "ACCEPTED"});
                                                             fetchUserCards();
                                                         }}
                                                     >
@@ -1010,7 +1032,10 @@ const Dashboard = () => {
                                                     </button>
                                                     <button
                                                         className="btn glassy-button"
-                                                        onClick={() => setEditRequest({ id: item.t_id, resolution: "DENIED" })}
+                                                        onClick={() => setEditRequest({
+                                                            id: item.t_id,
+                                                            resolution: "DENIED"
+                                                        })}
                                                     >
                                                         Decline
                                                     </button>
@@ -1031,22 +1056,25 @@ const Dashboard = () => {
                     <div className="pending-requests-header">
                         <h2>Split Transactions</h2>
                         <button className="toggle-pending-btn" onClick={toggleSplits}>
-                            {showSplits ? <GoTriangleUp size={20} /> : <GoTriangleDown size={20} />}
+                            {showSplits ? <GoTriangleUp size={20}/> : <GoTriangleDown size={20}/>}
                         </button>
                     </div>
                     {showSplits && (
                         splitTransactions.length > 0 ? (
-                            <AnimatedList
-                                items={splitTransactions.map(tx => (
-                                    <div key={tx.t_id} className="pending-item">
-                                        <div>
-                                            <strong>Group:</strong> {tx.split_group_id} | <strong>Amount:</strong> {tx.amount}€
-                                        </div>
-                                        <div className="button-row">
-                                            <span className="status">{tx.t_state}</span>
-                                        </div>
+                            <AnimatedList items={splitTransactions.map(tx => (
+                                <div key={tx.t_id} className="pending-item">
+                                    <div>
+                                        <strong>From:</strong> {tx.senderName}
+                                        {' | '}
+                                        <strong>Group:</strong> {tx.split_group_id}
+                                        {' | '}
+                                        <strong>Amount:</strong> {tx.amount}€
                                     </div>
-                                ))}
+                                    <div className="button-row">
+                                        <span className="status">{tx.t_state}</span>
+                                    </div>
+                                </div>
+                            ))}
                             />
                         ) : (
                             <p>No split transactions.</p>
