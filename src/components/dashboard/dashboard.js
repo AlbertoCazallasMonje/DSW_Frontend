@@ -140,6 +140,8 @@ const Dashboard = () => {
     const [transactionCard, setTransactionCard] = useState(null);   // fachada visual
     const [editRequest, setEditRequest] = useState({id: null, resolution: null});
 
+    const [frequentUsers, setFrequentUsers] = useState([]);
+
     useEffect(() => {
         if (!sessionToken) return;
         (async () => {
@@ -199,6 +201,22 @@ const Dashboard = () => {
         }
     };
 
+    const fetchFrequentUsers = async (limit = 5) => {
+        try {
+            const token = await fetchActionToken("FIND-USER");
+            const res = await fetch('http://localhost:3000/frequentUsers', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({sessionToken, actionToken: token, limit})
+            });
+            if (!res.ok) throw new Error('Error fetching recent users');
+            const users = await res.json();
+            console.log('FrequentUsers result:', users);
+            setFrequentUsers(users);
+        } catch (err) {
+            console.error(err);
+        }
+    };
     // Top-Up handler
     const handleTopUpSubmit = async (e) => {
         e.preventDefault();
@@ -220,7 +238,8 @@ const Dashboard = () => {
                     const err = await posRes.json();
                     throw new Error("Error creating POS order: " + err.error);
                 }
-                const {pos_id} = await posRes.json();
+                const { pos_id } = await posRes.json();
+
 
                 const payToken = await fetchActionToken("PAY-POS-ORDER");
                 const payRes = await fetch('http://localhost:3002/payPosOrder', {
@@ -237,8 +256,23 @@ const Dashboard = () => {
                     const err = await payRes.json();
                     throw new Error("Error paying POS order: " + err.error);
                 }
-                const {transactionId} = await payRes.json();
+                const { transactionId } = await payRes.json();
 
+                const registerToken = await fetchActionToken("ADD-TOP-UP");
+                const registerRes = await fetch('http://localhost:3002/topUp', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        sessionToken,
+                        actionToken: registerToken,
+                        transactionId,
+                        quantity: parseFloat(topUpAmount)
+                    })
+                });
+                if (!registerRes.ok) {
+                    const err = await registerRes.json();
+                    throw new Error("Error registering top-up: " + err.message);
+                }
                 setBalance(b => b + parseFloat(topUpAmount));
                 alert(`Top-up con tarjeta completado. TxID: ${transactionId}`);
             } else {
@@ -255,17 +289,18 @@ const Dashboard = () => {
                 });
                 if (!res.ok) {
                     const err = await res.json();
-                    alert("Error adding top-up: " + err.message);
-                } else {
-                    setBalance(b => b + parseFloat(topUpAmount));
-                    alert("Top-up added successfully.");
+                    throw new Error("Error adding top-up: " + err.message);
                 }
+                setBalance(b => b + parseFloat(topUpAmount));
+                alert("Top-up added successfully.");
             }
+
             setActiveSpotlight(null);
             setTopUpAmount("");
             setSelectedCard(null);
+
         } catch (error) {
-            console.error(error);
+            console.error("Error en Top-Up:", error);
             alert(error.message);
         }
     };
@@ -582,6 +617,9 @@ const Dashboard = () => {
             setBulkEmailInput("");
             setBulkAmount("");
         }
+        if (['transaction','requestMoney','multiTransaction'].includes(type)) {
+            fetchFrequentUsers(5);
+        }
     };
 
     return (
@@ -666,15 +704,6 @@ const Dashboard = () => {
                                         <input
                                             type="radio"
                                             name="paymentMethod"
-                                            value="balance"
-                                            checked={paymentMethod === "balance"}
-                                            onChange={() => setPaymentMethod("balance")}
-                                        /> Balance
-                                    </label>
-                                    <label>
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
                                             value="card"
                                             checked={paymentMethod === "card"}
                                             onChange={() => setPaymentMethod("card")}
@@ -755,22 +784,35 @@ const Dashboard = () => {
                 )}
 
                 {/* Transfer */}
-                {activeSpotlight === "transaction" && (
-                    <div className="top-up-wrapper">
-                        <SpotlightCard spotlightColor="rgba(125, 36, 199, 0.81)">
-                            <h2>Transfer</h2>
-                            <form onSubmit={handleTransactionSubmit} className="top-up-form">
-                                <div className="form-group">
-                                    <label htmlFor="transactionEmail">Email:</label>
-                                    <input
-                                        id="transactionEmail"
-                                        type="email"
-                                        value={transactionEmail}
-                                        onChange={e => setTransactionEmail(e.target.value)}
-                                        placeholder="user@example.com"
-                                        required
-                                    />
-                                </div>
+                    {activeSpotlight === "transaction" && (
+                        <div className="top-up-wrapper">
+                            <SpotlightCard spotlightColor="rgba(125, 36, 199, 0.81)">
+                                <h2>Transfer</h2>
+                                {/* Recent users list */}
+                                {frequentUsers.length > 0 && (
+                                    <div className="form-group">
+                                        <label>Recent Contacts:</label>
+                                        <AnimatedList
+                                            items={frequentUsers.map(u => `${u.u_name} ${u.u_lastName} <${u.u_email}>`)}
+                                            onItemSelect={(_, idx) => setTransactionEmail(frequentUsers[idx].u_email)}
+                                            showGradients
+                                            enableArrowNavigation
+                                            displayScrollbar
+                                        />
+                                    </div>
+                                )}
+                                <form onSubmit={handleTransactionSubmit} className="top-up-form">
+                                    <div className="form-group">
+                                        <label htmlFor="transactionEmail">Email:</label>
+                                        <input
+                                            id="transactionEmail"
+                                            type="email"
+                                            value={transactionEmail}
+                                            onChange={e => setTransactionEmail(e.target.value)}
+                                            placeholder="user@example.com"
+                                            required
+                                        />
+                                    </div>
                                 <div className="form-group">
                                     <label htmlFor="transactionAmount">Amount:</label>
                                     <input
@@ -837,18 +879,20 @@ const Dashboard = () => {
                     <div className="top-up-wrapper">
                         <SpotlightCard spotlightColor="rgba(125, 36, 199, 0.81)">
                             <h2>Request Money</h2>
-                            <form onSubmit={handleRequestMoneySubmit} className="top-up-form">
+                            {/* Recent users */}
+                            {frequentUsers.length > 0 && (
                                 <div className="form-group">
-                                    <label htmlFor="requestMoneyEmail">Email:</label>
-                                    <input
-                                        id="requestMoneyEmail"
-                                        type="email"
-                                        value={requestMoneyEmail}
-                                        onChange={e => setRequestMoneyEmail(e.target.value)}
-                                        placeholder="john.doe@example.com"
-                                        required
+                                    <label>Recent Contacts:</label>
+                                    <AnimatedList
+                                        items={frequentUsers.map(u => `${u.u_name} ${u.u_lastName} <${u.u_email}>`)}
+                                        onItemSelect={(_, idx) => setRequestMoneyEmail(frequentUsers[idx].u_email)}
+                                        showGradients
+                                        enableArrowNavigation
+                                        displayScrollbar
                                     />
                                 </div>
+                            )}
+                            <form onSubmit={handleRequestMoneySubmit} className="top-up-form">
                                 {/* Request Money */}
                                 <div className="form-group">
                                     <label htmlFor="requestMoneyAmount">Amount:</label>
@@ -896,20 +940,21 @@ const Dashboard = () => {
                     <div className="top-up-wrapper">
                         <SpotlightCard spotlightColor="rgba(125, 36, 199, 0.81)">
                             <h2>Bulk Transfer</h2>
-                            <form onSubmit={handleMultiTransactionSubmit} className="top-up-form">
+                            {/* Recent users: click to add to bulkEmails */}
+                            {frequentUsers.length > 0 && (
                                 <div className="form-group">
-                                    <label htmlFor="bulkEmailInput">Email:</label>
-                                    <input
-                                        id="bulkEmailInput"
-                                        type="email"
-                                        value={bulkEmailInput}
-                                        onChange={e => setBulkEmailInput(e.target.value)}
-                                        placeholder="user@example.com"
+                                    <label>Recent Contacts:</label>
+                                    <AnimatedList
+                                        items={frequentUsers.map(u => `${u.u_name} ${u.u_lastName} <${u.u_email}>`)}
+                                        onItemSelect={(_, idx) => setBulkEmails(prev => [...prev, frequentUsers[idx].u_email])}
+                                        showGradients
+                                        enableArrowNavigation
+                                        displayScrollbar
                                     />
-                                    <button type="button" className="btn glassy-button" onClick={addBulkEmail}>
-                                        Add
-                                    </button>
                                 </div>
+                            )}>
+                            )}
+                            <form onSubmit={handleMultiTransactionSubmit} className="top-up-form">
                                 {bulkEmails.length > 0 && (
                                     <AnimatedList
                                         items={bulkEmails.map((email, idx) => (
