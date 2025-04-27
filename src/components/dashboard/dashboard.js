@@ -9,7 +9,8 @@ import {
     GoRead,
     GoTriangleDown,
     GoTriangleUp,
-    GoPeople
+    GoPeople,
+    GoLock
 } from "react-icons/go";
 import CountUp from './CountUp';
 import SpotlightCard from './SpotlightCard';
@@ -136,11 +137,13 @@ const Dashboard = () => {
     const pendingRef = useRef(null);
 
     // Payment method and edit request
-    const [paymentMethod, setPaymentMethod] = useState("balance"); // "balance" o "card"
-    const [transactionCard, setTransactionCard] = useState(null);   // fachada visual
+    const [paymentMethod, setPaymentMethod] = useState("balance");
+    const [transactionCard, setTransactionCard] = useState(null);
     const [editRequest, setEditRequest] = useState({id: null, resolution: null});
 
     const [frequentUsers, setFrequentUsers] = useState([]);
+
+    const [blockedEmail, setBlockedEmail] = useState("");
 
     useEffect(() => {
         if (!sessionToken) return;
@@ -217,6 +220,33 @@ const Dashboard = () => {
             console.error(err);
         }
     };
+
+    const handleBlockUserSubmit = async e => {
+        e.preventDefault();
+        try {
+            const token = await fetchActionToken("BLOCK-USER");
+            const res = await fetch('http://localhost:3000/blockUser', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    sessionToken,
+                    actionToken: token,
+                    blockedEmail    // aquí le mandas el email
+                })
+            });
+            if (!res.ok) {
+                const { error } = await res.json();
+                throw new Error(error);
+            }
+            alert("Usuario bloqueado exitosamente.");
+            setActiveSpotlight(null);
+            setBlockedEmail("");
+        } catch (err) {
+            console.error(err);
+            alert(err.message);
+        }
+    };
+
     // Top-Up handler
     const handleTopUpSubmit = async (e) => {
         e.preventDefault();
@@ -238,7 +268,7 @@ const Dashboard = () => {
                     const err = await posRes.json();
                     throw new Error("Error creating POS order: " + err.error);
                 }
-                const { pos_id } = await posRes.json();
+                const {pos_id} = await posRes.json();
 
 
                 const payToken = await fetchActionToken("PAY-POS-ORDER");
@@ -256,7 +286,7 @@ const Dashboard = () => {
                     const err = await payRes.json();
                     throw new Error("Error paying POS order: " + err.error);
                 }
-                const { transactionId } = await payRes.json();
+                const {transactionId} = await payRes.json();
 
                 const registerToken = await fetchActionToken("ADD-TOP-UP");
                 const registerRes = await fetch('http://localhost:3002/topUp', {
@@ -305,30 +335,35 @@ const Dashboard = () => {
         }
     };
 
-    // Transfer handler
+// Transfer handler
     const handleTransactionSubmit = async (e) => {
         e.preventDefault();
-        try {
-            if (paymentMethod === "card") {
-                const txToken = await fetchActionToken("PERFORM-TRANSACTION");
-                const txRes = await fetch('http://localhost:3002/performTransaction', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        sessionToken,
-                        actionToken: txToken,
-                        email: transactionEmail,
-                        amount: parseFloat(transactionAmount),
-                        paymentMethod: 'card',
-                        card: TEST_PM_ID
-                    })
-                });
-                if (!txRes.ok) {
-                    const err = await txRes.json();
-                    throw new Error("Error performing transaction: " + err.error);
-                }
-                const {transactionId} = await txRes.json();
 
+        try {
+            const txToken = await fetchActionToken("PERFORM-TRANSACTION");
+            const performPayload = {
+                sessionToken,
+                actionToken: txToken,
+                email: transactionEmail,
+                amount: parseFloat(transactionAmount),
+                paymentMethod,
+                ...(paymentMethod === "card" && {
+                    card: transactionCard || TEST_PM_ID
+                })
+            };
+
+            const txRes = await fetch('http://localhost:3002/performTransaction', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(performPayload)
+            });
+            if (!txRes.ok) {
+                const {error} = await txRes.json();
+                throw new Error("Error performing transaction: " + error);
+            }
+            const {transactionId} = await txRes.json();
+
+            if (paymentMethod === "card") {
                 const posToken = await fetchActionToken("CREATE-POS-ORDER");
                 const posRes = await fetch('http://localhost:3002/createPosOrder', {
                     method: 'POST',
@@ -342,8 +377,8 @@ const Dashboard = () => {
                     })
                 });
                 if (!posRes.ok) {
-                    const err = await posRes.json();
-                    throw new Error("Error creating POS order: " + err.error);
+                    const {error} = await posRes.json();
+                    throw new Error("Error creating POS order: " + error);
                 }
                 const {pos_id} = await posRes.json();
 
@@ -355,47 +390,34 @@ const Dashboard = () => {
                         sessionToken,
                         actionToken: payToken,
                         orderId: pos_id,
-                        paymentMethodId: TEST_PM_ID,
+                        paymentMethodId: performPayload.card,
                         transactionId
                     })
                 });
                 if (!payRes.ok) {
-                    const err = await payRes.json();
-                    throw new Error("Error paying POS order: " + err.error);
+                    const {error} = await payRes.json();
+                    throw new Error("Error paying POS order: " + error);
                 }
 
-                setBalance(b => b - parseFloat(transactionAmount));
-                alert(`Transference finished successfully. TxID: ${transactionId}`);
+                alert(`Transferencia completada con tarjeta. TxID: ${transactionId}`);
+
             } else {
-                const token = await fetchActionToken("PERFORM-TRANSACTION");
-                const res = await fetch('http://localhost:3002/performTransaction', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        sessionToken,
-                        actionToken: token,
-                        email: transactionEmail,
-                        amount: parseFloat(transactionAmount)
-                    })
-                });
-                if (!res.ok) {
-                    const err = await res.json();
-                    alert("Error performing transaction: " + err.error);
-                } else {
-                    setBalance(b => b - parseFloat(transactionAmount));
-                    alert("Transaction performed successfully.");
-                }
+                setBalance(prev => prev - parseFloat(transactionAmount));
+                alert("Transferencia completada. Saldo actualizado.");
             }
+
             setActiveSpotlight(null);
             setTransactionEmail("");
             setTransactionAmount("");
             setPaymentMethod("balance");
             setTransactionCard(null);
+
         } catch (error) {
             console.error(error);
             alert(error.message);
         }
     };
+
 
     // Request Money handler
     const handleRequestMoneySubmit = async (e) => {
@@ -617,7 +639,7 @@ const Dashboard = () => {
             setBulkEmailInput("");
             setBulkAmount("");
         }
-        if (['transaction','requestMoney','multiTransaction'].includes(type)) {
+        if (['transaction', 'requestMoney', 'multiTransaction'].includes(type)) {
             fetchFrequentUsers(5);
         }
     };
@@ -662,6 +684,8 @@ const Dashboard = () => {
                         size={24}/></button>
                     <button className="glassy-button" onClick={() => toggleSpotlight("multiTransaction")}><GoPeople
                         size={24}/></button>
+                    <button className="glassy-button" onClick={() => toggleSpotlight("blockUser")}><GoLock size={24}/>
+                    </button>
                 </div>
 
                 {/* Top-Up */}
@@ -784,35 +808,35 @@ const Dashboard = () => {
                 )}
 
                 {/* Transfer */}
-                    {activeSpotlight === "transaction" && (
-                        <div className="top-up-wrapper">
-                            <SpotlightCard spotlightColor="rgba(125, 36, 199, 0.81)">
-                                <h2>Transfer</h2>
-                                {/* Recent users list */}
-                                {frequentUsers.length > 0 && (
-                                    <div className="form-group">
-                                        <label>Recent Contacts:</label>
-                                        <AnimatedList
-                                            items={frequentUsers.map(u => `${u.u_name} ${u.u_lastName} <${u.u_email}>`)}
-                                            onItemSelect={(_, idx) => setTransactionEmail(frequentUsers[idx].u_email)}
-                                            showGradients
-                                            enableArrowNavigation
-                                            displayScrollbar
-                                        />
-                                    </div>
-                                )}
-                                <form onSubmit={handleTransactionSubmit} className="top-up-form">
-                                    <div className="form-group">
-                                        <label htmlFor="transactionEmail">Email:</label>
-                                        <input
-                                            id="transactionEmail"
-                                            type="email"
-                                            value={transactionEmail}
-                                            onChange={e => setTransactionEmail(e.target.value)}
-                                            placeholder="user@example.com"
-                                            required
-                                        />
-                                    </div>
+                {activeSpotlight === "transaction" && (
+                    <div className="top-up-wrapper">
+                        <SpotlightCard spotlightColor="rgba(125, 36, 199, 0.81)">
+                            <h2>Transfer</h2>
+                            {/* Recent users list */}
+                            {frequentUsers.length > 0 && (
+                                <div className="form-group">
+                                    <label>Recent Contacts:</label>
+                                    <AnimatedList
+                                        items={frequentUsers.map(u => `${u.u_name} ${u.u_lastName} <${u.u_email}>`)}
+                                        onItemSelect={(_, idx) => setTransactionEmail(frequentUsers[idx].u_email)}
+                                        showGradients
+                                        enableArrowNavigation
+                                        displayScrollbar
+                                    />
+                                </div>
+                            )}
+                            <form onSubmit={handleTransactionSubmit} className="top-up-form">
+                                <div className="form-group">
+                                    <label htmlFor="transactionEmail">Email:</label>
+                                    <input
+                                        id="transactionEmail"
+                                        type="email"
+                                        value={transactionEmail}
+                                        onChange={e => setTransactionEmail(e.target.value)}
+                                        placeholder="user@example.com"
+                                        required
+                                    />
+                                </div>
                                 <div className="form-group">
                                     <label htmlFor="transactionAmount">Amount:</label>
                                     <input
@@ -875,25 +899,38 @@ const Dashboard = () => {
                 )}
 
                 {/* Request Money */}
-                {activeSpotlight === "requestMoney" && (
-                    <div className="top-up-wrapper">
-                        <SpotlightCard spotlightColor="rgba(125, 36, 199, 0.81)">
+                {activeSpotlight === 'requestMoney' && (
+                    <div className="spotlight">
+                        <SpotlightCard>
                             <h2>Request Money</h2>
-                            {/* Recent users */}
-                            {frequentUsers.length > 0 && (
+                            <form onSubmit={handleRequestMoneySubmit} className="top-up-form">
+                                {/* Email input */}
                                 <div className="form-group">
-                                    <label>Recent Contacts:</label>
-                                    <AnimatedList
-                                        items={frequentUsers.map(u => `${u.u_name} ${u.u_lastName} <${u.u_email}>`)}
-                                        onItemSelect={(_, idx) => setRequestMoneyEmail(frequentUsers[idx].u_email)}
-                                        showGradients
-                                        enableArrowNavigation
-                                        displayScrollbar
+                                    <label htmlFor="requestMoneyEmail">Email:</label>
+                                    <input
+                                        id="requestMoneyEmail"
+                                        type="email"
+                                        value={requestMoneyEmail}
+                                        onChange={e => setRequestMoneyEmail(e.target.value)}
+                                        placeholder="user@example.com"
+                                        required
                                     />
                                 </div>
-                            )}
-                            <form onSubmit={handleRequestMoneySubmit} className="top-up-form">
-                                {/* Request Money */}
+
+                                {/* Recent Contacts list */}
+                                {frequentUsers.length > 0 && (
+                                    <div className="form-group">
+                                        <label>Recent Contacts:</label>
+                                        <AnimatedList
+                                            items={frequentUsers.map(u => `${u.u_name} ${u.u_lastName} <${u.u_email}>`)}
+                                            onItemSelect={(_, idx) => setRequestMoneyEmail(frequentUsers[idx].u_email)}
+                                            showGradients
+                                            enableArrowNavigation
+                                            displayScrollbar
+                                        />
+                                    </div>
+                                )}
+
                                 <div className="form-group">
                                     <label htmlFor="requestMoneyAmount">Amount:</label>
                                     <input
@@ -911,22 +948,14 @@ const Dashboard = () => {
                                         id="requestMoneyMessage"
                                         value={requestMoneyMessage}
                                         onChange={e => setRequestMoneyMessage(e.target.value)}
-                                        placeholder="Requesting money for lunch"
+                                        placeholder="For dinner"
                                         required
                                     />
                                 </div>
+
                                 <div className="button-row">
                                     <button type="submit" className="btn glassy-button">Submit</button>
-                                    <button
-                                        type="button"
-                                        className="btn glassy-button"
-                                        onClick={() => {
-                                            setActiveSpotlight(null);
-                                            setRequestMoneyEmail("");
-                                            setRequestMoneyAmount("");
-                                            setRequestMoneyMessage("");
-                                        }}
-                                    >
+                                    <button type="button" className="btn glassy-button" onClick={() => setActiveSpotlight(null)}>
                                         Cancel
                                     </button>
                                 </div>
@@ -940,28 +969,45 @@ const Dashboard = () => {
                     <div className="top-up-wrapper">
                         <SpotlightCard spotlightColor="rgba(125, 36, 199, 0.81)">
                             <h2>Bulk Transfer</h2>
-                            {/* Recent users: click to add to bulkEmails */}
-                            {frequentUsers.length > 0 && (
-                                <div className="form-group">
-                                    <label>Recent Contacts:</label>
-                                    <AnimatedList
-                                        items={frequentUsers.map(u => `${u.u_name} ${u.u_lastName} <${u.u_email}>`)}
-                                        onItemSelect={(_, idx) => setBulkEmails(prev => [...prev, frequentUsers[idx].u_email])}
-                                        showGradients
-                                        enableArrowNavigation
-                                        displayScrollbar
-                                    />
-                                </div>
-                            )}>
-                            )}
+
+                            {/* Text field to add email manually */}
                             <form onSubmit={handleMultiTransactionSubmit} className="top-up-form">
+                                <div className="form-group">
+                                    <label htmlFor="bulkEmailInput">Email:</label>
+                                    <input
+                                        id="bulkEmailInput"
+                                        type="email"
+                                        value={bulkEmailInput}
+                                        onChange={e => setBulkEmailInput(e.target.value)}
+                                        placeholder="user@example.com"
+                                        className="top-up-input"
+                                    />
+                                    <button type="button" className="btn glassy-button" onClick={addBulkEmail}>
+                                        Add
+                                    </button>
+                                </div>
+
+                                {/* Optional recent contacts */}
+                                {frequentUsers.length > 0 && (
+                                    <div className="form-group">
+                                        <label>Recent Contacts:</label>
+                                        <AnimatedList
+                                            items={frequentUsers.map(u => `${u.u_name} ${u.u_lastName} <${u.u_email}>`)}
+                                            onItemSelect={(_, idx) => setBulkEmails(prev => [...prev, frequentUsers[idx].email])}
+                                            showGradients
+                                            enableArrowNavigation
+                                            displayScrollbar
+                                        />
+                                    </div>
+                                )}
+
+                                {/* List of added emails */}
                                 {bulkEmails.length > 0 && (
                                     <AnimatedList
-                                        items={bulkEmails.map((email, idx) => (
-                                            <div key={idx}>{email}</div>
-                                        ))}
+                                        items={bulkEmails.map((email, i) => <div key={i}>{email}</div>)}
                                     />
                                 )}
+
                                 <div className="form-group">
                                     <label htmlFor="bulkAmount">Amount to split:</label>
                                     <input
@@ -971,8 +1017,10 @@ const Dashboard = () => {
                                         onChange={e => setBulkAmount(e.target.value)}
                                         placeholder="Amount"
                                         required
+                                        className="top-up-input"
                                     />
                                 </div>
+
                                 <div className="button-row">
                                     <button type="submit" className="btn glassy-button">Submit</button>
                                     <button
@@ -992,6 +1040,42 @@ const Dashboard = () => {
                         </SpotlightCard>
                     </div>
                 )}
+                {/* Sección Bloquear Usuario */}
+                {activeSpotlight === "blockUser" && (
+                    <div className="top-up-wrapper">
+                        <SpotlightCard spotlightColor="rgba(199, 36, 36, 0.8)">
+                            <h2>Bloquear Usuario</h2>
+                            <form onSubmit={handleBlockUserSubmit} className="top-up-form">
+                                <div className="form-group">
+                                    <label htmlFor="blockedEmail">Email a bloquear:</label>
+                                    <input
+                                        id="blockedEmail"
+                                        type="email"
+                                        value={blockedEmail}
+                                        onChange={e => setBlockedEmail(e.target.value)}
+                                        placeholder="usuario@ejemplo.com"
+                                        required
+                                        className="top-up-input"
+                                    />
+                                </div>
+                                <div className="button-row">
+                                    <button type="submit" className="btn glassy-button">Bloquear</button>
+                                    <button
+                                        type="button"
+                                        className="btn glassy-button"
+                                        onClick={() => {
+                                            setActiveSpotlight(null);
+                                            setBlockedEmail("");
+                                        }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </SpotlightCard>
+                    </div>
+                )}
+
 
                 {/* Pending Requests */}
                 <section className="pending-requests" ref={pendingRef}>
