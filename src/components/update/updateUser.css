@@ -51,13 +51,19 @@ body {
     padding: 20px;
 }
 
-.update-container {
-    background-color: #fff;
-    padding: 20px 30px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 500px;
+.update-container .form-group input,
+.update-container .form-group select {
+    background-color: #2c2c2c !important;
+    color: #f5f5f5   !important;
+    border: 1px solid #555;
+    box-sizing: border-box;
+}
+.update-container .form-group input::placeholder {
+    color: #aaaaaa !important;
+}
+
+.update-container .form-group select option[value=""] {
+    color: #888888 !important;
 }
 
 .update-container h2 {
