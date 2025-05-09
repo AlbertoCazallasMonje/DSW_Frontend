@@ -17,7 +17,7 @@ const AdminDashboard = () => {
 
   const getActionToken = async (actionCode) => {
     try {
-      const actionRes = await fetch('http://localhost:3000/action', {
+      const actionRes = await fetch('/users/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionCode })
@@ -34,7 +34,7 @@ const AdminDashboard = () => {
   const fetchUsers = async () => {
     try {
       const actionToken = await getActionToken("ADMIN-LOAD-USERS");
-      const res = await fetch('http://localhost:3000/adminLoadUsers', {
+      const res = await fetch('/users/adminLoadUsers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionToken })
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
   const fetchTransactions = async () => {
     try {
       const actionToken = await getActionToken("ADMIN-LOAD-TRANSACTIONS");
-      const res = await fetch('http://localhost:3002/adminLoadTransactionDetails', {
+      const res = await fetch('/accounts/adminLoadTransactionDetails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken, actionToken })
@@ -126,7 +126,7 @@ const AdminDashboard = () => {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch('http://localhost:3000/logout', {
+      const res = await fetch('/users/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionToken })

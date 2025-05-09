@@ -55,7 +55,7 @@ const Register = () => {
                     country: country
                 };
                 
-                const bankResponse = await fetch("http://localhost:3002/create", {
+                const bankResponse = await fetch("/accounts/create", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"

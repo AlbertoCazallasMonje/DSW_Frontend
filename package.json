@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^13.5.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.6.3",
+    "http-proxy-middleware": "^3.0.5",
     "ogl": "^1.0.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -22,7 +23,8 @@
     "start": "PORT=3001 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "dev": "cross-env HOST=0.0.0.0 PORT=3001 DANGEROUSLY_DISABLE_HOST_CHECK=true react-scripts start"
   },
   "eslintConfig": {
     "extends": [
@@ -41,5 +43,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }

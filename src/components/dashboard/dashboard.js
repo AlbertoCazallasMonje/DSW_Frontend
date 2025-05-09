@@ -23,7 +23,7 @@ const Dashboard = () => {
     const sessionToken = state?.token;
 
     const fetchActionToken = async (actionCode) => {
-        const res = await fetch('http://localhost:3000/action', {
+        const res = await fetch('/users/action', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({sessionToken, actionCode})
@@ -38,7 +38,7 @@ const Dashboard = () => {
 
         if (!txId) {
             const txToken = await fetchActionToken("PERFORM-TRANSACTION");
-            const txRes = await fetch('http://localhost:3002/performTransaction', {
+            const txRes = await fetch('/accounts/performTransaction', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -58,7 +58,7 @@ const Dashboard = () => {
         }
 
         const posToken = await fetchActionToken("CREATE-POS-ORDER");
-        const posRes = await fetch('http://localhost:3002/createPosOrder', {
+        const posRes = await fetch('/accounts/createPosOrder', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -76,7 +76,7 @@ const Dashboard = () => {
         const pos_id = (await posRes.json()).pos_id;
 
         const payToken = await fetchActionToken("PAY-POS-ORDER");
-        const payRes = await fetch('http://localhost:3002/payPosOrder', {
+        const payRes = await fetch('/accounts/payPosOrder', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -150,7 +150,7 @@ const Dashboard = () => {
         (async () => {
             try {
                 const token1 = await fetchActionToken("FIND-USER");
-                const findRes = await fetch('http://localhost:3002/find', {
+                const findRes = await fetch('/accounts/find', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({sessionToken, actionToken: token1})
@@ -163,7 +163,7 @@ const Dashboard = () => {
             }
             try {
                 const token2 = await fetchActionToken("FIND-USER");
-                const userRes = await fetch('http://localhost:3000/findUser', {
+                const userRes = await fetch('/users/findUser', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({sessionToken, actionToken: token2})
@@ -186,7 +186,7 @@ const Dashboard = () => {
     const fetchUserCards = async () => {
         try {
             const token = await fetchActionToken("SEARCH-CARD");
-            const res = await fetch('http://localhost:3002/searchCards', {
+            const res = await fetch('/accounts/searchCards', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({sessionToken, actionToken: token})
@@ -207,7 +207,7 @@ const Dashboard = () => {
     const fetchFrequentUsers = async (limit = 5) => {
         try {
             const token = await fetchActionToken("FIND-USER");
-            const res = await fetch('http://localhost:3000/frequentUsers', {
+            const res = await fetch('/users/frequentUsers', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({sessionToken, actionToken: token, limit})
@@ -225,7 +225,7 @@ const Dashboard = () => {
         e.preventDefault();
         try {
             const token = await fetchActionToken("BLOCK-USER");
-            const res = await fetch('http://localhost:3000/blockUser', {
+            const res = await fetch('/users/blockUser', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -253,7 +253,7 @@ const Dashboard = () => {
         try {
             if (paymentMethod === "card") {
                 const posToken = await fetchActionToken("CREATE-POS-ORDER");
-                const posRes = await fetch('http://localhost:3002/createPosOrder', {
+                const posRes = await fetch('/accounts/createPosOrder', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -272,7 +272,7 @@ const Dashboard = () => {
 
 
                 const payToken = await fetchActionToken("PAY-POS-ORDER");
-                const payRes = await fetch('http://localhost:3002/payPosOrder', {
+                const payRes = await fetch('/accounts/payPosOrder', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -289,7 +289,7 @@ const Dashboard = () => {
                 const {transactionId} = await payRes.json();
 
                 const registerToken = await fetchActionToken("ADD-TOP-UP");
-                const registerRes = await fetch('http://localhost:3002/topUp', {
+                const registerRes = await fetch('/accounts/topUp', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -307,7 +307,7 @@ const Dashboard = () => {
                 alert(`Top-up con tarjeta completado. TxID: ${transactionId}`);
             } else {
                 const token = await fetchActionToken("ADD-TOP-UP");
-                const res = await fetch('http://localhost:3002/topUp', {
+                const res = await fetch('/accounts/topUp', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -352,7 +352,7 @@ const Dashboard = () => {
                 })
             };
 
-            const txRes = await fetch('http://localhost:3002/performTransaction', {
+            const txRes = await fetch('/accounts/performTransaction', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(performPayload)
@@ -365,7 +365,7 @@ const Dashboard = () => {
 
             if (paymentMethod === "card") {
                 const posToken = await fetchActionToken("CREATE-POS-ORDER");
-                const posRes = await fetch('http://localhost:3002/createPosOrder', {
+                const posRes = await fetch('/accounts/createPosOrder', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -383,7 +383,7 @@ const Dashboard = () => {
                 const {pos_id} = await posRes.json();
 
                 const payToken = await fetchActionToken("PAY-POS-ORDER");
-                const payRes = await fetch('http://localhost:3002/payPosOrder', {
+                const payRes = await fetch('/accounts/payPosOrder', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -424,7 +424,7 @@ const Dashboard = () => {
         e.preventDefault();
         try {
             const token = await fetchActionToken("PERFORM-TRANSACTION");
-            const reqRes = await fetch('http://localhost:3002/requestMoney', {
+            const reqRes = await fetch('/accounts/requestMoney', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -460,7 +460,7 @@ const Dashboard = () => {
         e.preventDefault();
         try {
             const token = await fetchActionToken("PERFORM-TRANSACTION");
-            const bulkRes = await fetch('http://localhost:3002/performBulkTransaction', {
+            const bulkRes = await fetch('/accounts/performBulkTransaction', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -492,7 +492,7 @@ const Dashboard = () => {
         setLoadingPending(true);
         try {
             const token = await fetchActionToken("LOAD-TRANSACTIONS");
-            const res = await fetch('http://localhost:3002/loadPendingTransactions', {
+            const res = await fetch('/accounts/loadPendingTransactions', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({sessionToken, actionToken: token})
@@ -524,7 +524,7 @@ const Dashboard = () => {
                 });
             }
             const token = await fetchActionToken("PERFORM-TRANSACTION");
-            await fetch('http://localhost:3002/resolveRequest', {
+            await fetch('/accounts/resolveRequest', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({sessionToken, actionToken: token, transactionId: id, resolution})
@@ -546,7 +546,7 @@ const Dashboard = () => {
         setLoadingSplits(true);
         try {
             const token = await fetchActionToken("LOAD-TRANSACTIONS");
-            const res = await fetch('http://localhost:3002/loadSplitTransactions', {
+            const res = await fetch('/accounts/loadSplitTransactions', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({sessionToken, actionToken: token})
@@ -570,7 +570,7 @@ const Dashboard = () => {
         e.preventDefault();
         try {
             const token = await fetchActionToken("CREATE-CARD");
-            const res = await fetch('http://localhost:3002/createCard', {
+            const res = await fetch('/accounts/createCard', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -602,7 +602,7 @@ const Dashboard = () => {
     // Logout & Profile
     const handleLogout = async () => {
         try {
-            await fetch('http://localhost:3000/logout', {
+            await fetch('/users/logout', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({sessionToken})

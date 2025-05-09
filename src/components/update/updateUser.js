@@ -19,7 +19,7 @@ const UpdateProfile = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const userResponse = await fetch('http://localhost:3000/findUser', {
+                const userResponse = await fetch('/users/findUser', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -63,7 +63,7 @@ const UpdateProfile = () => {
 
             const token = sessionToken;
     
-            const actionResponse = await fetch('http://localhost:3000/action', {
+            const actionResponse = await fetch('/users/action', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -91,7 +91,7 @@ const UpdateProfile = () => {
                 country: country
             };
     
-            const response = await fetch('http://localhost:3000/update', {
+            const response = await fetch('/users/update', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -115,7 +115,7 @@ const UpdateProfile = () => {
         if (confirmation === "DELETE ACCOUNT") {
             try {
 
-                const actionResponse = await fetch('http://localhost:3000/action', {
+                const actionResponse = await fetch('/users/action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -129,7 +129,7 @@ const UpdateProfile = () => {
                 const actionData = await actionResponse.json();
                 const actionToken = actionData.actionToken;
     
-                const deleteResponse = await fetch('http://localhost:3000/delete', {
+                const deleteResponse = await fetch('/users/delete', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
